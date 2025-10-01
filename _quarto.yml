@@ -11,7 +11,7 @@ website:
       - href: index.qmd
         text: Home
       - href: market-research.qmd # Added your report to the navigation
-        text: Market Research
+        text: Reports
       - href: about.qmd
         text: About
 
