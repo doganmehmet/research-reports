@@ -1025,7 +1025,7 @@ plt.savefig(
 
 import re
 # The base path to your charts folder
-base_path = "charts/"
+base_path = "docs/charts/"
 
 # The dictionary mapping the placeholder description to the full file path of each chart
 CHART_FILENAME_LIBRARY = {
