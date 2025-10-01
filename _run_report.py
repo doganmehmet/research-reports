@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 
 # --- Configuration ---
-TEMPLATE_FILE = "report-template.qmd"
+TEMPLATE_FILE = "_report-template.qmd"
 REPORTS_DIR = "reports"
 OUTPUT_DIR = "docs"
 

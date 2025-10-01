@@ -5,4 +5,4 @@ params:
   report_date: "2025-10-02"
 ---
 
-{{< include ../report-template.qmd >}}
+{{< include ../_report-template.qmd >}}
