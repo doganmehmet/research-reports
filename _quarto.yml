@@ -1,25 +1,20 @@
-# Project-level configuration
 project:
   type: website
-  output-dir: docs  # Renders the website to the /docs folder for GitHub Pages
+  output-dir: docs
 
-# Website-specific configuration
 website:
-  title: "Market Research" # A more descriptive title for the site
+  title: "Market Research"
   navbar:
     left:
       - href: index.qmd
         text: Home
-      - href: market-research.qmd # Added your report to the navigation
+      - href: reports.qmd  # Changed this line
         text: Reports
       - href: about.qmd
         text: About
 
-# Default format options for the entire project
 format:
   html:
-    theme:
-      - cosmo # Using a single theme here for simplicity.
-      # - brand # to be added later, maybe not.
+    theme: cosmo
     css: styles.css
-    toc: true # Displays a table of contents on pages
+    toc: true

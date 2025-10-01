@@ -1,0 +1,11 @@
+---
+title: "All Reports"
+listing:
+  contents: "reports/*.qmd" # Look for .qmd files in the 'reports' folder
+  sort: "date desc"          # Show newest first
+  type: default
+  categories: true
+  sort-ui: true
+  filter-ui: true
+page-layout: full
+---

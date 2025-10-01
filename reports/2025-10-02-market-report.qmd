@@ -1,0 +1,8 @@
+---
+title: "Market Research: 2025-10-02"
+date: "2025-10-02"
+params:
+  report_date: "2025-10-02"
+---
+
+{< include ../report-template.qmd >}

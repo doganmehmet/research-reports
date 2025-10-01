@@ -7,5 +7,14 @@
   },
   "market-research.qmd": {
     "market-research.html": "1b057674"
+  },
+  "report-template.qmd": {
+    "report-template.html": "69751c6a"
+  },
+  "reports/2025-10-02-market-report.qmd": {
+    "2025-10-02-market-report.html": "58afde3a"
+  },
+  "reports.qmd": {
+    "reports.html": "40602ae5"
   }
 }
