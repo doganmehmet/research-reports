@@ -1,9 +1,3 @@
----
-title: "Market Research: {{< meta params.report_date >}}"
-params:
-  report_date: "YYYY-MM-DD"
----
-
 
 ```{python}
 #| echo: false
