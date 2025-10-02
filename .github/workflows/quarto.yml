@@ -27,7 +27,11 @@ jobs:
       # 4. Render the site
       - name: Render Quarto site
         run: quarto render
-
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_SECRET: ${{ secrets.GEMINI_API_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          
       # 5. Push docs/ back to main branch (for GitHub Pages)
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
