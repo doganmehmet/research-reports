@@ -395,12 +395,6 @@ plt.savefig(
 #| fig-dpi: 100
 #| include: false
 
-import pandas as pd
-import matplotlib.pyplot as plt
-
-import matplotlib.dates as mdates
-import numpy as np
-
 # --- 1. SETUP: Create Sample Data ---
 # This sample data matches the structure of your FRED data.
 # Replace this section with your actual 'usYields' DataFrame.
