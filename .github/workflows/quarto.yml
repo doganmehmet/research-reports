@@ -1,0 +1,36 @@
+name: Render Quarto Website
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Set up Python (needed for post_rename.py and any Python chunks)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      # 3. Install Quarto
+      - name: Install Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      # 4. Render the site
+      - name: Render Quarto site
+        run: quarto render
+
+      # 5. Push docs/ back to main branch (for GitHub Pages)
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs

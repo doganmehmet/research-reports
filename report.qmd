@@ -343,7 +343,7 @@ ax.spines['top'].set_visible(False)
 ax.spines['left'].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/MSCI World Equity Index.png', # Filename and extension
+    'charts/MSCI World Equity Index.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -378,7 +378,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/Performance of Major US Stock Indices.png', # Filename and extension
+    'charts/Performance of Major US Stock Indices.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -484,7 +484,7 @@ ax.legend(loc='upper left', frameon=False, ncol=3, columnspacing=0.8)
 fig.subplots_adjust(left=0.08, right=0.92, top=0.9, bottom=0.2)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/US 2Y and 10Y Treasury Yields and Spread.png', # Filename and extension
+    'charts/US 2Y and 10Y Treasury Yields and Spread.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -568,7 +568,7 @@ plt.figtext(0.01, -0.02, "Data source: BLS", ha="left", fontsize=9, fontweight="
 # plt.tight_layout()
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/US Inflation Rate (YoY).png', # Filename and extension
+    'charts/US Inflation Rate (YoY).png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -612,7 +612,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/US Inflation Rate CPI and PCE (YoY).png', # Filename and extension
+    'charts/US Inflation Rate CPI and PCE (YoY).png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -656,7 +656,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/US Unemployment Rate.png', # Filename and extension
+    'charts/US Unemployment Rate.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -705,7 +705,7 @@ for spine in ["top", "left", "right"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/US GDP Growth Rate (YoY).png', # Filename and extension
+    'charts/US GDP Growth Rate (YoY).png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -744,7 +744,7 @@ formatter = FuncFormatter(lambda x, _: f'{x/1e6:.1f}T')
 ax.yaxis.set_major_formatter(formatter)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/Federal Reserve Total Assets.png', # Filename and extension
+    'charts/Federal Reserve Total Assets.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -791,7 +791,7 @@ ax.yaxis.set_major_formatter(PercentFormatter(xmax=100))  # if values like 2.4 =
 
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/Household Debt Service Payments.png', # Filename and extension
+    'charts/Household Debt Service Payments.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -827,7 +827,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/S&P 500 PE Ratio.png', # Filename and extension
+    'charts/S&P 500 PE Ratio.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -864,7 +864,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/Cboe Volatility Index (VIX).png', # Filename and extension
+    'charts/Cboe Volatility Index (VIX).png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -916,7 +916,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/Federal Funds Target Rate (Upper Limit).png', # Filename and extension
+    'charts/Federal Funds Target Rate (Upper Limit).png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -960,7 +960,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'C:/Users/Mehmet/OneDrive/Investment/Market Research/charts/US Recession Indicator.png', # Filename and extension
+    'charts/US Recession Indicator.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
