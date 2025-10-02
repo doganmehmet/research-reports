@@ -1,0 +1,25 @@
+---
+title: Archive
+---
+
+# Past Reports---
+title: Archive
+---
+
+# Past Reports
+
+```{python}
+import os
+
+archive_dir = "docs/archive"
+
+# only proceed if folder exists
+if os.path.isdir(archive_dir):
+    reports = sorted(os.listdir(archive_dir), reverse=True)
+    for r in reports:
+        print(f"- [{r}](archive/{r})")
+else:
+    print("No archived reports yet.")
+
+```
+

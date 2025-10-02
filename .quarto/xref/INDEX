@@ -16,5 +16,11 @@
   },
   "reports.qmd": {
     "reports.html": "40602ae5"
+  },
+  "report.qmd": {
+    "report.html": "df5baf52"
+  },
+  "archive.qmd": {
+    "archive.html": "71d32ed6"
   }
 }
