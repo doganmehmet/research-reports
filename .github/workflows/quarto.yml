@@ -27,7 +27,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install jupyter pyyaml pandas numpy pandas_datareader yfinance matplotlib
+          pip install jupyter pyyaml pandas numpy pandas_datareader yfinance matplotlib openai google-genai
 
 
       # 4. Render the site
