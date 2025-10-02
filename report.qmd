@@ -243,45 +243,45 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 #| echo: false
 #| output: 'asis'
 #| cache: true
-#| 
-# from openai import OpenAI
 
-# client = OpenAI()
+from openai import OpenAI
 
-# # Reliable financial/economic domains
-# trusted_domains = [
-#     "reuters.com",
-#     "bloomberg.com",
-#     "ft.com",
-#     "wsj.com",
-#     "federalreserve.gov",
-#     "ecb.europa.eu",
-#     "bis.org",
-#     "imf.org",
-#     "worldbank.org",
-#     "oecd.org",
-#     "sec.gov",
-#     "spglobal.com",
-#     "msci.com",
-#     "morningstar.com",
-#     "nasdaq.com",
-#     "nyse.com"
-# ]
+client = OpenAI()
 
-# response = client.responses.create(
-#     model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
-#     tools=[{
-#             "type": "web_search",
-#             "filters": {
-#               "allowed_domains": trusted_domains
-#             }
-#           }],
-#     input=[
-#         {"role": "user", "content": prompt}
-#     ],
-# )
+# Reliable financial/economic domains
+trusted_domains = [
+    "reuters.com",
+    "bloomberg.com",
+    "ft.com",
+    "wsj.com",
+    "federalreserve.gov",
+    "ecb.europa.eu",
+    "bis.org",
+    "imf.org",
+    "worldbank.org",
+    "oecd.org",
+    "sec.gov",
+    "spglobal.com",
+    "msci.com",
+    "morningstar.com",
+    "nasdaq.com",
+    "nyse.com"
+]
 
-# ai_response_gbt5 = response.output_text
+response = client.responses.create(
+    model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
+    tools=[{
+            "type": "web_search",
+            "filters": {
+              "allowed_domains": trusted_domains
+            }
+          }],
+    input=[
+        {"role": "user", "content": prompt}
+    ],
+)
+
+ai_response_gbt5 = response.output_text
 
 ```
 
@@ -970,48 +970,48 @@ plt.savefig(
 
 ### AUTOMATION OF CHART PLACEMENT
 
-# import re
-# # The base path to your charts folder
-# base_path = "charts/"
+import re
+# The base path to your charts folder
+base_path = "charts/"
 
-# # The dictionary mapping the placeholder description to the full file path of each chart
-# CHART_FILENAME_LIBRARY = {
-#     "US Inflation Rate (YoY)": base_path + "US Inflation Rate (YoY).png",
-#     "US Inflation Rate CPI and PCE (YoY)": base_path + "US Inflation Rate CPI and PCE (YoY).png",
-#     "US Unemployment Rate": base_path + "US Unemployment Rate.png",
-#     "US GDP Growth Rate (YoY)": base_path + "US GDP Growth Rate (YoY).png",
-#     "Federal Reserve Total Assets": base_path + "Federal Reserve Total Assets.png",
-#     "Household Debt Service Payments": base_path + "Household Debt Service Payments.png",
-#     "MSCI World Equity Index": base_path + "MSCI World Equity Index.png",
-#     "Performance of Major US Stock Indices": base_path + "Performance of Major US Stock Indices.png",
-#     "S&P 500 PE Ratio": base_path + "S&P 500 PE Ratio.png",
-#     "Cboe Volatility Index (VIX)": base_path + "Cboe Volatility Index (VIX).png",
-#     "US Recession Indicator": base_path + "US Recession Indicator.png",
-#     "Federal Funds Target Rate (Upper Limit)": base_path + "Federal Funds Target Rate (Upper Limit).png",
-#     "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png"
-# }
+# The dictionary mapping the placeholder description to the full file path of each chart
+CHART_FILENAME_LIBRARY = {
+    "US Inflation Rate (YoY)": base_path + "US Inflation Rate (YoY).png",
+    "US Inflation Rate CPI and PCE (YoY)": base_path + "US Inflation Rate CPI and PCE (YoY).png",
+    "US Unemployment Rate": base_path + "US Unemployment Rate.png",
+    "US GDP Growth Rate (YoY)": base_path + "US GDP Growth Rate (YoY).png",
+    "Federal Reserve Total Assets": base_path + "Federal Reserve Total Assets.png",
+    "Household Debt Service Payments": base_path + "Household Debt Service Payments.png",
+    "MSCI World Equity Index": base_path + "MSCI World Equity Index.png",
+    "Performance of Major US Stock Indices": base_path + "Performance of Major US Stock Indices.png",
+    "S&P 500 PE Ratio": base_path + "S&P 500 PE Ratio.png",
+    "Cboe Volatility Index (VIX)": base_path + "Cboe Volatility Index (VIX).png",
+    "US Recession Indicator": base_path + "US Recession Indicator.png",
+    "Federal Funds Target Rate (Upper Limit)": base_path + "Federal Funds Target Rate (Upper Limit).png",
+    "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png"
+}
 
-# # The text from the Gemini API
-# ai_response_text = ai_response_gbt5
+# The text from the Gemini API
+ai_response_text = ai_response_gbt5
 
-# segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
+segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
 
-# for segment in segments:
-#     if segment.startswith('[CHART:'):
-#         chart_description = segment[7:-1].strip()
+for segment in segments:
+    if segment.startswith('[CHART:'):
+        chart_description = segment[7:-1].strip()
         
-#         # Look up the filename in your new library
-#         chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
+        # Look up the filename in your new library
+        chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
         
-#         if chart_filename:
-#             # Print the markdown image tag using the found filename
-#             print(f"\n![{chart_description}]({chart_filename})\n")
-#         else:
-#             print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
+        if chart_filename:
+            # Print the markdown image tag using the found filename
+            print(f"\n![{chart_description}]({chart_filename})\n")
+        else:
+            print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
             
-#     else:
-#         # This is a normal text segment, so just print it
-#         print(segment, end="")
+    else:
+        # This is a normal text segment, so just print it
+        print(segment, end="")
 ```
 
 
