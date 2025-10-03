@@ -147,6 +147,12 @@ recessions = web.get_data_fred("JHDUSRGDPBR", start="1900-01-01")
 recessions.rename(columns={"JHDUSRGDPBR": "recession"}, inplace=True)
 recessions.index = recessions.index.to_period('Q')
 
+# ICE BofA US High Yield Index Option-Adjusted Spread
+option_adjusted_spread = web.get_data_fred("BAMLH0A0HYM2", start="1900-01-01")
+option_adjusted_spread = option_adjusted_spread.resample("M").last()
+option_adjusted_spread.index = option_adjusted_spread.index.to_period('M')
+option_adjusted_spread.rename(columns={'BAMLH0A0HYM2':'spread'}, inplace=True)
+
 # Convert each dataframe to its own JSON string
 # orient='records' creates a clean list of objects
 # indent=2 adds nice formatting for readability
@@ -170,7 +176,9 @@ all_data = {
     "vix": {str(k): v for k, v in vix.to_dict(orient="index").items()},
     "us_recessions": {str(k): v for k, v in recessions.to_dict(orient="index").items()},
     "fed_target_rate": {str(k): v for k, v in fedTargetRateChange.to_dict(orient="index").items()},
-    "us_yields": {str(k): v for k, v in usYields_monthly.to_dict(orient="index").items()}
+    "us_yields": {str(k): v for k, v in usYields_monthly.to_dict(orient="index").items()},
+    "bofa_high_yield_option_adjusted_spread": {str(k): v for k, v in option_adjusted_spread.to_dict(orient="index").items()}
+    
 }
 
 ```
@@ -208,6 +216,7 @@ Data provided:
 - us_recessions: Past U.S. recessions, 1: there was a recession at the corresponding date
 - fed_target_rate: Federal Funds Target Range - Upper Limit, Percent, Daily. It tells what the upper limit is, and what was the change on a specific day.
 - us_yields: (DGS2: U.S. 2Y and DGS10: U.S. 10Y yields.
+- bofa_high_yield_option_adjusted_spread: The ICE BofA Option-Adjusted Spreads (OASs) are the calculated spreads between a computed OAS index of all bonds in a given rating category and a spot Treasury curve.
 
 
 {json.dumps(all_data, indent=2)}
@@ -232,6 +241,7 @@ Chart Placeholder Library:
 - [CHART: US Recession Indicator]
 - [CHART: Federal Funds Target Rate (Upper Limit)]
 - [CHART: US 2Y and 10Y Treasury Yields and Spread]
+- [CHART: ICE BofA Option-Adjusted Spreads]
 
 
 Finally, based on your complete analysis, conclude with a suggested portfolio exposure for US growth stocks (e.g., 0-25%, 25-50%, 50-75%, 75-100%). Briefly justify your reasoning.
@@ -323,7 +333,7 @@ ai_response_gemini25 = response.text
 # MSCI World Equity Index
 
 # 1. Create the plot AND capture the Axes object in the 'ax' variable
-ax = msci.plot()
+ax = msci.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -490,6 +500,7 @@ plt.savefig(
 ```
 
 
+
 ```{python}
 #| echo: false
 #| fig-align: center
@@ -513,7 +524,7 @@ def custom_date_formatter(x, pos):
 
 # --- Plot ---
 fig, ax = plt.subplots()
-bars = ax.bar(plot_data.index.to_timestamp(), plot_data['cpi'], color="royalblue", width=20)
+bars = ax.bar(plot_data.index.to_timestamp(), plot_data['cpi'], color="#0612f2", width=20)
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -545,7 +556,7 @@ ax.set_xlim(plot_data.index.to_timestamp().min() - pd.Timedelta(days=15),
 
 
 # --- Format y-axis ---
-ax.set_ylim(0, 5)
+ax.set_ylim(0, 4)
 ax.set_ylabel("%", fontsize=10)
 ax.yaxis.set_major_formatter(lambda x, pos: f"{x:.1f}%")
 
@@ -583,7 +594,7 @@ plt.savefig(
 
 plot_data = inflation[inflation.index >= "2020-01-01"]
 
-ax = plot_data.plot()
+ax = plot_data.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -628,7 +639,7 @@ plt.savefig(
 
 plot_data = unemployment[unemployment.index >= "2020-01-01"]
 
-ax = plot_data.plot()
+ax = plot_data.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -670,10 +681,9 @@ plt.savefig(
 #| include: false
 
 # GDP
-
 plot_data = gdp.tail(12)
 
-ax = plot_data.plot(kind='bar')
+ax = plot_data.plot(kind='bar', color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -720,7 +730,7 @@ plt.savefig(
 
 # Federal Reserve Total Assets
 
-ax = fed_assets.plot()
+ax = fed_assets.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -759,7 +769,7 @@ plt.savefig(
 
 # Household Debt Service Payments
 
-ax = hdebt.plot()
+ax = hdebt.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -805,7 +815,7 @@ plt.savefig(
 
 # S&P 500 P/E Ratio
 
-ax = pe.plot()
+ax = pe.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -842,7 +852,7 @@ plt.savefig(
 
 # Cboe Volatility Index (VIX)
 
-ax = vix.plot()
+ax = vix.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -879,7 +889,7 @@ plt.savefig(
 
 # Federal Funds Target Rate (Upper Limit)
 
-ax = fedTargetRate.plot()
+ax = fedTargetRate.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -931,7 +941,7 @@ plt.savefig(
 
 # US Recession Indicator
 
-ax = recessions.plot()
+ax = recessions.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -963,14 +973,47 @@ plt.savefig(
 # plt.show()
 ```
 
-# OPEANAI GBT-5
+
 ```{python}
 #| echo: false
-#| output: 'asis'
+#| include: false
 
-### AUTOMATION OF CHART PLACEMENT
+# ICE BofA Option-Adjusted Spreads
+ax = option_adjusted_spread.plot(color='#0612f2')
 
-import re
+# setting figure background and plot background color
+ax.set_facecolor('#f5f5f5')  # Set plot background color
+
+# To access the figure:
+fig = ax.get_figure()
+fig.patch.set_facecolor("#f5f5f5")  # figure background
+
+# # Get the container from the existing plot
+# bar_container = ax.containers[0]
+
+# # Add bar labels
+# ax.bar_label(bar_container)
+
+ax.yaxis.tick_right()
+ax.yaxis.set_label_position("right")
+
+# --- Remove top/right spines ---
+for spine in ["top", "left"]:
+    ax.spines[spine].set_visible(False)
+
+plt.savefig(
+    'charts/ICE BofA Option-Adjusted Spreads.png', # Filename and extension
+    dpi=300,             # Dots per inch for high resolution
+    bbox_inches='tight'  # Trims extra whitespace
+)
+
+# plt.show()
+```
+
+```{python}
+#| echo: false
+#| include: false
+
 # The base path to your charts folder
 base_path = "charts/"
 
@@ -988,8 +1031,21 @@ CHART_FILENAME_LIBRARY = {
     "Cboe Volatility Index (VIX)": base_path + "Cboe Volatility Index (VIX).png",
     "US Recession Indicator": base_path + "US Recession Indicator.png",
     "Federal Funds Target Rate (Upper Limit)": base_path + "Federal Funds Target Rate (Upper Limit).png",
-    "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png"
+    "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png",
+    "ICE BofA Option-Adjusted Spreads": base_path + "ICE BofA Option-Adjusted Spreads.png"
 }
+
+```
+
+# OPEANAI GBT-5
+```{python}
+#| echo: false
+#| output: 'asis'
+
+### AUTOMATION OF CHART PLACEMENT
+
+import re
+
 
 # The text from the Gemini API
 ai_response_text = ai_response_gbt5
@@ -1023,25 +1079,6 @@ for segment in segments:
 ### AUTOMATION OF CHART PLACEMENT
 
 import re
-# The base path to your charts folder
-base_path = "charts/"
-
-# The dictionary mapping the placeholder description to the full file path of each chart
-CHART_FILENAME_LIBRARY = {
-    "US Inflation Rate (YoY)": base_path + "US Inflation Rate (YoY).png",
-    "US Inflation Rate CPI and PCE (YoY)": base_path + "US Inflation Rate CPI and PCE (YoY).png",
-    "US Unemployment Rate": base_path + "US Unemployment Rate.png",
-    "US GDP Growth Rate (YoY)": base_path + "US GDP Growth Rate (YoY).png",
-    "Federal Reserve Total Assets": base_path + "Federal Reserve Total Assets.png",
-    "Household Debt Service Payments": base_path + "Household Debt Service Payments.png",
-    "MSCI World Equity Index": base_path + "MSCI World Equity Index.png",
-    "Performance of Major US Stock Indices": base_path + "Performance of Major US Stock Indices.png",
-    "S&P 500 PE Ratio": base_path + "S&P 500 PE Ratio.png",
-    "Cboe Volatility Index (VIX)": base_path + "Cboe Volatility Index (VIX).png",
-    "US Recession Indicator": base_path + "US Recession Indicator.png",
-    "Federal Funds Target Rate (Upper Limit)": base_path + "Federal Funds Target Rate (Upper Limit).png",
-    "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png"
-}
 
 # The text from the Gemini API
 ai_response_text = ai_response_gemini25

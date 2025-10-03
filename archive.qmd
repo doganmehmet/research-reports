@@ -9,9 +9,12 @@ title: Archive
 # Past Reports
 
 ```{python}
+#| echo: false
+#| 
 import os
 
-archive_dir = "docs/archive"
+# archive_dir = "docs/archive" # originally it was this line
+archive_dir = "archive"
 
 # only proceed if folder exists
 if os.path.isdir(archive_dir):
