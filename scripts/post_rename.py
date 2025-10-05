@@ -16,6 +16,11 @@ def update_archive_index(archive_dir_path, index_file_path):
     # 1. Find all HTML files in the archive, excluding the index itself.
     try:
         files = [f for f in os.listdir(archive_dir_path) if f.endswith('.html') and f != 'index.html']
+        
+        # --- CRITICAL DEBUGGING STEP ---
+        print(f"DEBUG: Files found in archive: {files}")
+        # --------------------------------
+
     except FileNotFoundError:
         print(f"Archive directory not found at '{archive_dir_path}', skipping index update.")
         return
@@ -66,21 +71,18 @@ for f in files:
     new_base = f"{base}_{suffix}"
     new_name = os.path.join(dirn, new_base + ext)
     
-    # Standard renaming and copying for 'latest'
     shutil.move(f, new_name)
     print("Renamed:", f, "->", new_name)
     stable = os.path.join(dirn, f"{base}-latest{ext}")
     shutil.copyfile(new_name, stable)
     print("Copied latest:", new_name, "->", stable)
     
-    # Move the dated report to the archive
     archive_dir_path = os.path.join(dirn, "archive")
     os.makedirs(archive_dir_path, exist_ok=True)
     final_archive_path = os.path.join(archive_dir_path, os.path.basename(new_name))
     shutil.move(new_name, final_archive_path)
     print("Moved to archive:", new_name)
     
-    # Also archive the source .qmd file
     source_qmd = "report.qmd"
     archive_qmd_dir = "archive_qmd"
     os.makedirs(archive_qmd_dir, exist_ok=True)
@@ -89,6 +91,5 @@ for f in files:
     shutil.copyfile(source_qmd, dest_qmd_path)
     print("Archived source:", source_qmd, "->", dest_qmd_path)
     
-    # --- FINALLY, CALL THE NEW FUNCTION ---
     index_file_path = os.path.join(archive_dir_path, "index.html")
     update_archive_index(archive_dir_path, index_file_path)
