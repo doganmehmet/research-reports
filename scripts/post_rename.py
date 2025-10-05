@@ -20,6 +20,8 @@ if not out_files:
 files = [f for f in out_files.splitlines() if f.strip()]
 ts = time.strftime("%Y-%m-%d")
 suffix = ts
+# new line
+new_name = "" # Initialize new_name to use it outside the loop
 
 for f in files:
     if not os.path.exists(f):
@@ -51,10 +53,35 @@ for f in files:
     shutil.copyfile(new_name, stable)
     print("Copied latest:", new_name, "->", stable)
 
+# below lines were normally here but they are used in the if below.
+# archive_dir = os.path.join(dirn, "archive")
+# os.makedirs(archive_dir, exist_ok=True)
 
-archive_dir = os.path.join(dirn, "archive")
-os.makedirs(archive_dir, exist_ok=True)
+# # Move the dated report into archive (skip the latest copy)
+# shutil.move(new_name, os.path.join(archive_dir, os.path.basename(new_name)))
+# print("Moved to archive:", new_name)
 
-# Move the dated report into archive (skip the latest copy)
-shutil.move(new_name, os.path.join(archive_dir, os.path.basename(new_name)))
-print("Moved to archive:", new_name)
+# below is added.
+# --- Archiving Section ---
+
+# Only proceed if a report was actually generated
+if new_name and os.path.exists(new_name):
+    # 1. Archive the rendered HTML report
+    archive_dir = os.path.join(dirn, "archive")
+    os.makedirs(archive_dir, exist_ok=True)
+    # Move the dated report into archive (skip the latest copy)
+    shutil.move(new_name, os.path.join(archive_dir, os.path.basename(new_name)))
+    print("Moved to archive:", new_name)
+
+    # 2. (NEW) Archive the source QMD file for reproducibility
+    source_qmd = "report.qmd"
+    archive_qmd_dir = "archive_qmd" # A new top-level folder for source files
+    os.makedirs(archive_qmd_dir, exist_ok=True)
+    
+    # Create the new filename for the archived source file
+    archive_qmd_name = f"report_{suffix}.qmd"
+    dest_qmd_path = os.path.join(archive_qmd_dir, archive_qmd_name)
+    
+    # Copy the source file
+    shutil.copyfile(source_qmd, dest_qmd_path)
+    print("Archived source:", source_qmd, "->", dest_qmd_path)
