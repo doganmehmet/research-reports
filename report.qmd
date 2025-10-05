@@ -153,15 +153,6 @@ option_adjusted_spread = option_adjusted_spread.resample("M").last()
 option_adjusted_spread.index = option_adjusted_spread.index.to_period('M')
 option_adjusted_spread.rename(columns={'BAMLH0A0HYM2':'spread'}, inplace=True)
 
-# Convert each dataframe to its own JSON string
-# orient='records' creates a clean list of objects
-# indent=2 adds nice formatting for readability
-# monthly_msci_json = monthly_msci.to_json(orient='records', indent=2)
-# inflation_json = inflation.to_json(orient='records', indent=2)
-# gdp_json = gdp.to_json(orient='records', indent=2)
-# stock_data_monthly_json = stock_data_monthly.to_json(orient='records', indent=2)
-# fed_assets_json = fed_assets.to_json(orient='records', indent=2)
-# hdebt_json = hdebt.to_json(orient='records', indent=2)
 
 # we convert the index when creating dictionary
 all_data = {
@@ -238,7 +229,7 @@ Chart Placeholder Library:
 - [CHART: Performance of Major US Stock Indices]
 - [CHART: S&P 500 PE Ratio]
 - [CHART: Cboe Volatility Index (VIX)]
-- [CHART: US Recession Indicator]
+- [CHART: US Past Recessions]
 - [CHART: Federal Funds Target Rate (Upper Limit)]
 - [CHART: US 2Y and 10Y Treasury Yields and Spread]
 - [CHART: ICE BofA Option-Adjusted Spreads]
@@ -254,44 +245,44 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 #| output: 'asis'
 #| cache: true
 
-from openai import OpenAI
+# from openai import OpenAI
 
-client = OpenAI()
+# client = OpenAI()
 
-# Reliable financial/economic domains
-trusted_domains = [
-    "reuters.com",
-    "bloomberg.com",
-    "ft.com",
-    "wsj.com",
-    "federalreserve.gov",
-    "ecb.europa.eu",
-    "bis.org",
-    "imf.org",
-    "worldbank.org",
-    "oecd.org",
-    "sec.gov",
-    "spglobal.com",
-    "msci.com",
-    "morningstar.com",
-    "nasdaq.com",
-    "nyse.com"
-]
+# # Reliable financial/economic domains
+# trusted_domains = [
+#     "reuters.com",
+#     "bloomberg.com",
+#     "ft.com",
+#     "wsj.com",
+#     "federalreserve.gov",
+#     "ecb.europa.eu",
+#     "bis.org",
+#     "imf.org",
+#     "worldbank.org",
+#     "oecd.org",
+#     "sec.gov",
+#     "spglobal.com",
+#     "msci.com",
+#     "morningstar.com",
+#     "nasdaq.com",
+#     "nyse.com"
+# ]
 
-response = client.responses.create(
-    model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
-    tools=[{
-            "type": "web_search",
-            "filters": {
-              "allowed_domains": trusted_domains
-            }
-          }],
-    input=[
-        {"role": "user", "content": prompt}
-    ],
-)
+# response = client.responses.create(
+#     model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
+#     tools=[{
+#             "type": "web_search",
+#             "filters": {
+#               "allowed_domains": trusted_domains
+#             }
+#           }],
+#     input=[
+#         {"role": "user", "content": prompt}
+#     ],
+# )
 
-ai_response_gbt5 = response.output_text
+# ai_response_gbt5 = response.output_text
 
 ```
 
@@ -889,7 +880,7 @@ plt.savefig(
 
 # Federal Funds Target Rate (Upper Limit)
 
-ax = fedTargetRate.plot(color='#0612f2')
+ax = fedTargetRate.plot() # color='#0612f2'
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -897,12 +888,6 @@ ax.set_facecolor('#f5f5f5')  # Set plot background color
 # To access the figure:
 fig = ax.get_figure()
 fig.patch.set_facecolor("#f5f5f5")  # figure background
-
-# # Get the container from the existing plot
-# bar_container = ax.containers[0]
-
-# # Add bar labels
-# ax.bar_label(bar_container)
 
 
 ax.yaxis.tick_right()
@@ -965,7 +950,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'charts/US Recession Indicator.png', # Filename and extension
+    'charts/US Past Recessions.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -1029,7 +1014,7 @@ CHART_FILENAME_LIBRARY = {
     "Performance of Major US Stock Indices": base_path + "Performance of Major US Stock Indices.png",
     "S&P 500 PE Ratio": base_path + "S&P 500 PE Ratio.png",
     "Cboe Volatility Index (VIX)": base_path + "Cboe Volatility Index (VIX).png",
-    "US Recession Indicator": base_path + "US Recession Indicator.png",
+    "US Past Recessions": base_path + "US Past Recessions.png",
     "Federal Funds Target Rate (Upper Limit)": base_path + "Federal Funds Target Rate (Upper Limit).png",
     "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png",
     "ICE BofA Option-Adjusted Spreads": base_path + "ICE BofA Option-Adjusted Spreads.png"
@@ -1044,30 +1029,30 @@ CHART_FILENAME_LIBRARY = {
 
 ### AUTOMATION OF CHART PLACEMENT
 
-import re
+# import re
 
 
-# The text from the Gemini API
-ai_response_text = ai_response_gbt5
+# # The text from the Gemini API
+# ai_response_text = ai_response_gbt5
 
-segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
+# segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
 
-for segment in segments:
-    if segment.startswith('[CHART:'):
-        chart_description = segment[7:-1].strip()
+# for segment in segments:
+#     if segment.startswith('[CHART:'):
+#         chart_description = segment[7:-1].strip()
         
-        # Look up the filename in your new library
-        chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
+#         # Look up the filename in your new library
+#         chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
         
-        if chart_filename:
-            # Print the markdown image tag using the found filename
-            print(f"\n![{chart_description}]({chart_filename})\n")
-        else:
-            print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
+#         if chart_filename:
+#             # Print the markdown image tag using the found filename
+#             print(f"\n![{chart_description}]({chart_filename})\n")
+#         else:
+#             print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
             
-    else:
-        # This is a normal text segment, so just print it
-        print(segment, end="")
+#     else:
+#         # This is a normal text segment, so just print it
+#         print(segment, end="")
 ```
 
 
