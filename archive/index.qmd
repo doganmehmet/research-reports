@@ -9,61 +9,23 @@ title: Archive
 
 import os
 
-# # Define the path by going UP one level first (../)
-# archive_dir = "../docs/archive"
+# Path to the archive folder containing old reports
+archive_dir = "../docs/archive"
 
-# # --- Debugging prints to confirm the fix ---
-# print("--- Debugging Archive Page (Corrected Path) ---")
-# print(f"Current Directory: {os.getcwd()}")
+if os.path.isdir(archive_dir):
+    reports = sorted(
+        [r for r in os.listdir(archive_dir) if r.endswith(".html") and r != "index.html"],
+        reverse=True
+    )
 
-# # only proceed if folder exists
-# if os.path.isdir(archive_dir):
-#     print(f"SUCCESS: Found '{archive_dir}'")
-#     print(f"Contents: {os.listdir(archive_dir)}")
-    
-#     # Filter out index.html from the list
-#     reports = sorted([r for r in os.listdir(archive_dir) if r != 'index.html'], reverse=True)
-    
-#     if reports:
-#         for r in reports:
-#             print(f"- [{r}]({r})")
-#     else:
-#         print("No archived reports yet.")
-# else:
-#     print(f"FAILED: Could not find directory at '{archive_dir}'")
-
-
-def update_archive_index(archive_dir_path, qmd_file_path):
-    """
-    Updates the Quarto QMD archive index file with a Markdown list of reports.
-    """
-    print("--- Updating archive index QMD ---")
-
-    try:
-        files = [f for f in os.listdir(archive_dir_path) if f.endswith('.html') and f != 'index.html']
-    except FileNotFoundError:
-        print(f"Archive directory not found at '{archive_dir_path}'")
-        return
-
-    files.sort(reverse=True)
-
-    if not files:
-        list_md = "No archived reports yet."
+    if reports:
+        for r in reports:
+            name = r.replace(".html", "")
+            print(f"- [{name}]({r})")
     else:
-        list_items = [f"- [{f.replace('.html','')}]({f})" for f in files]
-        list_md = "\n".join(list_items)
-
-    # Write the new .qmd file
-    with open(qmd_file_path, "w", encoding="utf-8") as f:
-        f.write(f"""---
-title: Archive
----
-
-# Past Reports
-
-{list_md}
-""")
-    print(f"Successfully updated {qmd_file_path}")
+        print("No archived reports yet.")
+else:
+    print(f"Archive directory not found: {archive_dir}")
 
 
 ```

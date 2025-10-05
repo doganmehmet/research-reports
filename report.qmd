@@ -214,6 +214,7 @@ Data provided:
 - fed_target_rate: Federal Funds Target Range - Upper Limit, Percent, Daily. It tells what the upper limit is, and what was the change on a specific day.
 - us_yields: (DGS2: U.S. 2Y and DGS10: U.S. 10Y yields.
 - bofa_high_yield_option_adjusted_spread: The ICE BofA Option-Adjusted Spreads (OASs) are the calculated spreads between a computed OAS index of all bonds in a given rating category and a spot Treasury curve.
+- gold: historical gold prices
 
 
 {json.dumps(all_data, indent=2)}
@@ -239,6 +240,7 @@ Chart Placeholder Library:
 - [CHART: Federal Funds Target Rate (Upper Limit)]
 - [CHART: US 2Y and 10Y Treasury Yields and Spread]
 - [CHART: ICE BofA Option-Adjusted Spreads]
+- [CHART: Gold Prices]
 
 
 Finally, based on your complete analysis, conclude with a suggested portfolio exposure for US growth stocks (e.g., 0-25%, 25-50%, 50-75%, 75-100%). Briefly justify your reasoning.
@@ -1001,6 +1003,44 @@ plt.savefig(
 # plt.show()
 ```
 
+
+```{python}
+#| echo: false
+#| include: false
+
+# ICE BofA Option-Adjusted Spreads
+ax = gold.plot(color='#0612f2')
+
+# setting figure background and plot background color
+ax.set_facecolor('#f5f5f5')  # Set plot background color
+
+# To access the figure:
+fig = ax.get_figure()
+fig.patch.set_facecolor("#f5f5f5")  # figure background
+
+# # Get the container from the existing plot
+# bar_container = ax.containers[0]
+
+# # Add bar labels
+# ax.bar_label(bar_container)
+
+ax.yaxis.tick_right()
+ax.yaxis.set_label_position("right")
+
+# --- Remove top/right spines ---
+for spine in ["top", "left"]:
+    ax.spines[spine].set_visible(False)
+
+plt.savefig(
+    'charts/Gold Prices.png', # Filename and extension
+    dpi=300,             # Dots per inch for high resolution
+    bbox_inches='tight'  # Trims extra whitespace
+)
+
+# plt.show()
+```
+
+
 ```{python}
 #| echo: false
 #| include: false
@@ -1023,7 +1063,8 @@ CHART_FILENAME_LIBRARY = {
     "US Past Recessions": base_path + "US Past Recessions.png",
     "Federal Funds Target Rate (Upper Limit)": base_path + "Federal Funds Target Rate (Upper Limit).png",
     "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png",
-    "ICE BofA Option-Adjusted Spreads": base_path + "ICE BofA Option-Adjusted Spreads.png"
+    "ICE BofA Option-Adjusted Spreads": base_path + "ICE BofA Option-Adjusted Spreads.png",
+    "Gold Prices": base_path + "Gold Prices.png"
 }
 
 ```
