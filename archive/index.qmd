@@ -7,30 +7,30 @@ title: Archive
 ```{python}
 #| echo: false
 
-# import os
+import os
 
-# # Define the path by going UP one level first (../)
-# archive_dir = "../docs/archive"
+# Define the path by going UP one level first (../)
+archive_dir = "../docs/archive"
 
-# # --- Debugging prints to confirm the fix ---
-# print("--- Debugging Archive Page (Corrected Path) ---")
-# print(f"Current Directory: {os.getcwd()}")
+# --- Debugging prints to confirm the fix ---
+print("--- Debugging Archive Page (Corrected Path) ---")
+print(f"Current Directory: {os.getcwd()}")
 
-# # only proceed if folder exists
-# if os.path.isdir(archive_dir):
-#     print(f"SUCCESS: Found '{archive_dir}'")
-#     print(f"Contents: {os.listdir(archive_dir)}")
+# only proceed if folder exists
+if os.path.isdir(archive_dir):
+    print(f"SUCCESS: Found '{archive_dir}'")
+    print(f"Contents: {os.listdir(archive_dir)}")
     
-#     # Filter out index.html from the list
-#     reports = sorted([r for r in os.listdir(archive_dir) if r != 'index.html'], reverse=True)
+    # Filter out index.html from the list
+    reports = sorted([r for r in os.listdir(archive_dir) if r != 'index.html'], reverse=True)
     
-#     if reports:
-#         for r in reports:
-#             print(f"- [{r}]({r})")
-#     else:
-#         print("No archived reports yet.")
-# else:
-#     print(f"FAILED: Could not find directory at '{archive_dir}'")
+    if reports:
+        for r in reports:
+            print(f"- [{r}]({r})")
+    else:
+        print("No archived reports yet.")
+else:
+    print(f"FAILED: Could not find directory at '{archive_dir}'")
 
 ```
 
