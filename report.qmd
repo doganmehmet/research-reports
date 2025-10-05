@@ -153,6 +153,11 @@ option_adjusted_spread = option_adjusted_spread.resample("M").last()
 option_adjusted_spread.index = option_adjusted_spread.index.to_period('M')
 option_adjusted_spread.rename(columns={'BAMLH0A0HYM2':'spread'}, inplace=True)
 
+# Gold
+gold = yf.download("GC=F", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
+gold.index = gold.index.to_period('M')
+gold.rename(columns= {"GC=F":"gold"}, inplace=True)
+
 
 # we convert the index when creating dictionary
 all_data = {
@@ -168,7 +173,8 @@ all_data = {
     "us_recessions": {str(k): v for k, v in recessions.to_dict(orient="index").items()},
     "fed_target_rate": {str(k): v for k, v in fedTargetRateChange.to_dict(orient="index").items()},
     "us_yields": {str(k): v for k, v in usYields_monthly.to_dict(orient="index").items()},
-    "bofa_high_yield_option_adjusted_spread": {str(k): v for k, v in option_adjusted_spread.to_dict(orient="index").items()}
+    "bofa_high_yield_option_adjusted_spread": {str(k): v for k, v in option_adjusted_spread.to_dict(orient="index").items()},
+    "gold": {str(k): v for k, v in gold.to_dict(orient="index").items()}
     
 }
 
