@@ -111,5 +111,9 @@ for f in files:
     print("Archived source:", source_qmd, "->", dest_qmd_path)
 
     # Update archive/index.qmd
-    qmd_file_path = os.path.join(archive_dir, "index.qmd")
+    # qmd_file_path = os.path.join(archive_dir, "index.qmd")
+    # update_archive_qmd(archive_dir, qmd_file_path)
+
+    # Update archive/index.qmd
+    qmd_file_path = "archive/index.qmd" # <-- Corrected path
     update_archive_qmd(archive_dir, qmd_file_path)

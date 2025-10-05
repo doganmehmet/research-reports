@@ -7,25 +7,25 @@ title: Archive
 ```{python}
 #| echo: false
 
-import os
+# import os
 
-# Path to the archive folder containing old reports
-archive_dir = "../archive" # this was "../docs/archive"
+# # Path to the archive folder containing old reports
+# archive_dir = "../archive" # this was "../docs/archive"
 
-if os.path.isdir(archive_dir):
-    reports = sorted(
-        [r for r in os.listdir(archive_dir) if r.endswith(".html") and r != "index.html"],
-        reverse=True
-    )
+# if os.path.isdir(archive_dir):
+#     reports = sorted(
+#         [r for r in os.listdir(archive_dir) if r.endswith(".html") and r != "index.html"],
+#         reverse=True
+#     )
 
-    if reports:
-        for r in reports:
-            name = r.replace(".html", "")
-            print(f"- [{name}]({r})")
-    else:
-        print("No archived reports yet.")
-else:
-    print(f"Archive directory not found: {archive_dir}")
+#     if reports:
+#         for r in reports:
+#             name = r.replace(".html", "")
+#             print(f"- [{name}]({r})")
+#     else:
+#         print("No archived reports yet.")
+# else:
+#     print(f"Archive directory not found: {archive_dir}")
 
 
 ```
