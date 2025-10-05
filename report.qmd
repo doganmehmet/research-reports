@@ -54,12 +54,12 @@ gdp.dropna(inplace=True)
 gdp.index = gdp.index.to_period('Q')
 gdp = gdp.round(1)
 
-# Household debt
+# HOUSEHOLD DEBT
 #  Household Debt Service Payments as a Percent of Disposable Personal Income (TDSP)
 #  Seasonally adjusted
 hdebt = web.get_data_fred("TDSP", start = "1900-01-01")
 hdebt.index = hdebt.index.to_period('Q')
-
+hdebt.rename(columns= {"TDSP":"household_debt"}, inplace=True)
 
 # UNEMPLOYMENT
 # https://fred.stlouisfed.org/series/UNRATE
@@ -132,16 +132,12 @@ fedTargetRateChange = fedTargetRate[fedTargetRate['change'] != 0]
 # Get 2Y and 10Y Treasury Yields from FRED
 usYields = web.get_data_fred(["DGS2", "DGS10"], start="1976-06-01")
 usYields = usYields.dropna()
-
 usYields_monthly = usYields.resample('M').mean()
-
-# usYields["SR-LR"] = usYields["DGS2"] - usYields["DGS10"]
-
 usYields_monthly.index = usYields_monthly.index.to_period('M')
 # usYields_monthly["SR-LR"] = usYields_monthly["DGS2"] - usYields_monthly["DGS10"]
 
 
-# U.S. Recessions
+# U.S. PAST RECESSIONS
 # https://fred.stlouisfed.org/series/JHDUSRGDPBR
 recessions = web.get_data_fred("JHDUSRGDPBR", start="1900-01-01")
 recessions.rename(columns={"JHDUSRGDPBR": "recession"}, inplace=True)
@@ -153,10 +149,15 @@ option_adjusted_spread = option_adjusted_spread.resample("M").last()
 option_adjusted_spread.index = option_adjusted_spread.index.to_period('M')
 option_adjusted_spread.rename(columns={'BAMLH0A0HYM2':'spread'}, inplace=True)
 
-# Gold
+# GOLD
 gold = yf.download("GC=F", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
 gold.index = gold.index.to_period('M')
 gold.rename(columns= {"GC=F":"gold"}, inplace=True)
+
+# BRENT OIL
+brent = yf.download("BZ=F", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
+brent.index = brent.index.to_period('M')
+brent.rename(columns= {"BZ=F":"brent"}, inplace=True)
 
 
 # we convert the index when creating dictionary
@@ -174,7 +175,8 @@ all_data = {
     "fed_target_rate": {str(k): v for k, v in fedTargetRateChange.to_dict(orient="index").items()},
     "us_yields": {str(k): v for k, v in usYields_monthly.to_dict(orient="index").items()},
     "bofa_high_yield_option_adjusted_spread": {str(k): v for k, v in option_adjusted_spread.to_dict(orient="index").items()},
-    "gold": {str(k): v for k, v in gold.to_dict(orient="index").items()}
+    "gold": {str(k): v for k, v in gold.to_dict(orient="index").items()},
+    "brent_oil": {str(k): v for k, v in brent.to_dict(orient="index").items()}
     
 }
 
@@ -196,7 +198,7 @@ First, provide a brief, up-to-date summary of the global financial markets cover
 
 Then, adopting the persona of a US growth-stock investor, use that summary as context for a deeper analysis of the U.S. market. Base your analysis *only* on the data provided in the JSON object below. In your analysis, please:
 
-- Compare the current U.S. market and macroeconomic data to historical periods using the datasets provided (inflation, unemployment, GDP, FED balance sheet, household debt, equity indices, P/E ratios, VIX, yields, and recession indicators). Identify patterns, correlations, or cycles that resemble today.
+- Compare the current U.S. market and macroeconomic data to historical periods using the datasets provided (inflation, unemployment, GDP, FED balance sheet, household debt, equity indices, P/E ratios, VIX, yields, BofA Option Adjusted Spread, gold, and brent oil prices). Identify patterns, correlations, or cycles that resemble today.
 - For each resemblance to past "boom and bust" periods, briefly explain why this similarity is relevant to current U.S. growth stocks. Where possible, quantify the similarity (e.g., "Current 2Y/10Y yield spread of X% is similar to Y% in 2000").
 - Provide at least 2 specific risks and 2 specific opportunities for U.S. growth investors, directly linking each to the patterns identified above.
 
@@ -215,6 +217,7 @@ Data provided:
 - us_yields: (DGS2: U.S. 2Y and DGS10: U.S. 10Y yields.
 - bofa_high_yield_option_adjusted_spread: The ICE BofA Option-Adjusted Spreads (OASs) are the calculated spreads between a computed OAS index of all bonds in a given rating category and a spot Treasury curve.
 - gold: historical gold prices
+- brent_pil: brent oil prices
 
 
 {json.dumps(all_data, indent=2)}
@@ -241,6 +244,7 @@ Chart Placeholder Library:
 - [CHART: US 2Y and 10Y Treasury Yields and Spread]
 - [CHART: ICE BofA Option-Adjusted Spreads]
 - [CHART: Gold Prices]
+- [CHART: Brent Oil Prices]
 
 
 Finally, based on your complete analysis, conclude with a suggested portfolio exposure for US growth stocks (e.g., 0-25%, 25-50%, 50-75%, 75-100%). Briefly justify your reasoning.
@@ -370,8 +374,40 @@ plt.savefig(
 #| fig-align: center
 #| include: false
 
-ax = stock_data[stock_data.index.year > 1986].plot(linewidth=0.5)
+# Assuming 'stock_data' is your initial DataFrame with a DatetimeIndex
+stock_returns = stock_data.tail(14).pct_change().dropna()
+del stock_returns['DJI']
+
+stock_returns.index = stock_returns.index.to_period('M')
+
+ax = stock_returns.plot(kind='bar', legend=True)
+
+# --- NEW: Format x-axis labels to show Month and Year ---
+# Get the PeriodIndex from your dataframe
+periods = stock_returns.index
+new_labels_text = []
+prev_year = None
+
+# Loop through each period to create the custom label
+for period in periods:
+    current_month_name = period.strftime('%b') # e.g., 'Oct'
+    current_year = period.year
+
+    # If it's the first item or the year has changed, show "Month\nYear"
+    if prev_year is None or current_year != prev_year:
+        new_labels_text.append(f"{current_month_name}\n{current_year}")
+    # Otherwise, just show "Month"
+    else:
+        new_labels_text.append(current_month_name)
+    
+    prev_year = current_year
+
+# Apply the newly created labels to the x-axis
+ax.set_xticklabels(new_labels_text, rotation=0, ha='center')
+# -----------------------------------------------------------
+
 # Set titles and labels
+# (You can add your titles and labels here if you have them)
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -383,17 +419,35 @@ fig.patch.set_facecolor("#f5f5f5")  # figure background
 ax.yaxis.set_label_position("right")
 ax.yaxis.tick_right()
 
+# show y-axis values as %s
+ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=0))
+
+# setting the last x-axis value to MTD
+# This runs AFTER the date formatting to override the last label
+labels = ax.get_xticklabels()
+new_labels_final = [label.get_text() for label in labels]
+if new_labels_final:
+    new_labels_final[-1] = 'MTD'
+ax.set_xticklabels(new_labels_final)
+
+
 # --- Remove top/right spines ---
 for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
+# Add a horizontal line at y=0 for reference
+ax.axhline(0, color='grey', linewidth=0.8, linestyle='--')
+
+plt.xlabel(None) # Remove the default x-axis label
+plt.tight_layout() # Adjust layout
+
 plt.savefig(
     'charts/Performance of Major US Stock Indices.png', # Filename and extension
-    dpi=300,             # Dots per inch for high resolution
-    bbox_inches='tight'  # Trims extra whitespace
+    dpi=300,            # Dots per inch for high resolution
+    bbox_inches='tight'   # Trims extra whitespace
 )
 
-# plt.show()
+plt.show() # Display the plot
 
 ```
 
@@ -1008,7 +1062,7 @@ plt.savefig(
 #| echo: false
 #| include: false
 
-# ICE BofA Option-Adjusted Spreads
+# Gold Prices
 ax = gold.plot(color='#0612f2')
 
 # setting figure background and plot background color
@@ -1045,6 +1099,36 @@ plt.savefig(
 #| echo: false
 #| include: false
 
+# Brent Oil Prices
+ax = brent.plot(color='#0612f2')
+
+# setting figure background and plot background color
+ax.set_facecolor('#f5f5f5')  # Set plot background color
+
+# To access the figure:
+fig = ax.get_figure()
+fig.patch.set_facecolor("#f5f5f5")  # figure background
+
+ax.yaxis.tick_right()
+ax.yaxis.set_label_position("right")
+
+# --- Remove top/right spines ---
+for spine in ["top", "left"]:
+    ax.spines[spine].set_visible(False)
+
+plt.savefig(
+    'charts/Gold Prices.png', # Filename and extension
+    dpi=300,             # Dots per inch for high resolution
+    bbox_inches='tight'  # Trims extra whitespace
+)
+
+# plt.show()
+```
+
+```{python}
+#| echo: false
+#| include: false
+
 # The base path to your charts folder
 base_path = "charts/"
 
@@ -1064,7 +1148,8 @@ CHART_FILENAME_LIBRARY = {
     "Federal Funds Target Rate (Upper Limit)": base_path + "Federal Funds Target Rate (Upper Limit).png",
     "US 2Y and 10Y Treasury Yields and Spread": base_path + "US 2Y and 10Y Treasury Yields and Spread.png",
     "ICE BofA Option-Adjusted Spreads": base_path + "ICE BofA Option-Adjusted Spreads.png",
-    "Gold Prices": base_path + "Gold Prices.png"
+    "Gold Prices": base_path + "Gold Prices.png",
+    "Brent Oil Prices": base_path + "Brent Oil Prices.png"
 }
 
 ```
