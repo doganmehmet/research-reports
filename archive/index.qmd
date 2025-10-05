@@ -10,21 +10,26 @@ title: Archive
 
 ```{python}
 #| echo: false
-#| 
+
 import os
 
-# archive_dir = "docs/archive" # originally it was this line
-archive_dir = "archive"
+# --- START DEBUGGING ---
+print("--- Debugging Archive Page ---")
+print(f"Current Directory: {os.getcwd()}")
+print(f"Contents of 'docs/': {os.listdir('docs')}")
+# --- END DEBUGGING ---
+
+archive_dir = "docs/archive"
 
 # only proceed if folder exists
 if os.path.isdir(archive_dir):
+    print(f"Contents of '{archive_dir}': {os.listdir(archive_dir)}") # Added another debug print
     reports = sorted(os.listdir(archive_dir), reverse=True)
     for r in reports:
-        # print(f"- [{r}](archive/{r})")
-        # New code
+        # The link is now relative to the index.html page inside archive/
         print(f"- [{r}]({r})")
 else:
-    print("No archived reports yet.")
+    print(f"'{archive_dir}' NOT FOUND or is not a directory.") # More explicit message
 
 ```
 
