@@ -10,7 +10,7 @@ title: Archive
 import os
 
 # Path to the archive folder containing old reports
-archive_dir = "../docs/archive"
+archive_dir = "../archive" # this was "../docs/archive"
 
 if os.path.isdir(archive_dir):
     reports = sorted(
