@@ -4,4 +4,4 @@ title: Archive
 
 # Past Reports
 
-- [report_2025-10-06-8dbbaa8](report_2025-10-06-8dbbaa8.html)
+- [report_2025-10-07-fadb818](report_2025-10-07-fadb818.html)
