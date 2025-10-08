@@ -65,7 +65,7 @@ hdebt.rename(columns= {"TDSP":"household_debt"}, inplace=True)
 # https://fred.stlouisfed.org/series/UNRATE
 unemployment = web.get_data_fred("UNRATE", start = "1900-01-01")
 unemployment.index = unemployment.index.to_period('M')
-
+unemployment.rename(columns= {"UNRATE":"unemployment_rate"}, inplace=True)
 
 # FED B/S Assets
 # https://fred.stlouisfed.org/series/WALCL#
@@ -74,8 +74,8 @@ unemployment.index = unemployment.index.to_period('M')
 # Download WALCL directly from FRED
 fed_assets = web.get_data_fred("WALCL", start="1900-01-01")
 fed_assets = fed_assets.resample('M').mean()
-
 fed_assets.index = fed_assets.index.to_period('M')
+fed_assets.rename(columns= {"WALCL":"fed_assets"}, inplace=True)
 
 # SP500, Nasdaq 100, Dow Jones  
 tickers = ["^GSPC", "^NDX", "^DJI"]
@@ -298,6 +298,34 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 
 ```
 
+
+```{python}
+#| echo: false
+#| output: 'asis'
+#| cache: true
+
+# DEEPSEEK
+
+
+# from openai import OpenAI
+
+# client = OpenAI(
+#     # api_key=os.getenv('DEEPSEEK_API_KEY'),
+#     api_key=os.environ['DEEPSEEK_API_KEY'],  # Direct from environment
+#     base_url="https://api.deepseek.com"
+# )
+
+# response = client.chat.completions.create(
+#     model="deepseek-reasoner",  # R1 model
+#     messages=[
+#         {"role": "user", "content": prompt}
+#     ],
+#     temperature=0.1
+# )
+
+# ai_response_ds = response.choices[0].message.content
+
+```
 
 ```{python}
 #| echo: false
@@ -690,9 +718,7 @@ plt.savefig(
 
 # UNEMPLOYMENT
 
-plot_data = unemployment[unemployment.index >= "2020-01-01"]
-
-ax = plot_data.plot(color='#0612f2')
+ax = unemployment.plot(color='#0612f2')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
