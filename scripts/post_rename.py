@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # scripts/post_rename.py
 
+#!/usr/bin/env python3
+# scripts/post_rename.py
+
 import os
 import time
 import shutil
@@ -16,18 +19,25 @@ def git_short_hash():
         return None
 
 
-def update_archive_qmd(archive_dir, qmd_file_path):
+def update_archive_qmd(qmd_file_path):
     """
     Updates the archive/index.qmd file with a static Markdown list
     of all archived reports (for static GitHub Pages display).
     """
     print("\n--- Updating archive index.qmd ---")
 
+    # Read from the persistent archive folder
+    persistent_archive = "archived_reports"
+    
     try:
-        files = [f for f in os.listdir(archive_dir) if f.endswith(".html") and f != "index.html"]
+        files = [f for f in os.listdir(persistent_archive) if f.endswith(".html")]
     except FileNotFoundError:
-        print(f"Archive directory not found: {archive_dir}")
-        return
+        print(f"Archive directory not found: {persistent_archive}")
+        files = []
+
+    if os.path.exists(persistent_archive):
+        existing = [f for f in os.listdir(persistent_archive) if f.endswith('.html')]
+        print(f"📂 Existing archived reports: {existing}")
 
     files.sort(reverse=True)
 
@@ -102,18 +112,25 @@ for f in files:
     shutil.copyfile(new_name, stable)
     print("Copied latest:", new_name, "->", stable)
 
-    # Create archive directory
-    archive_dir = os.path.join(dirn, "archive")
-    os.makedirs(archive_dir, exist_ok=True)
-    
-    # Copy dated report to archive
-    archive_dest = os.path.join(archive_dir, os.path.basename(new_name))
+    # Store dated report in PERSISTENT archive folder (not in docs/)
+    persistent_archive = "archived_reports"
+    os.makedirs(persistent_archive, exist_ok=True)
+    archive_dest = os.path.join(persistent_archive, os.path.basename(new_name))
     shutil.copy(new_name, archive_dest)
-    print("Copied to archive:", new_name, "->", archive_dest)
+    print("Copied to persistent archive:", new_name, "->", archive_dest)
 
-    # Copy the resources folder to archive
+    # Copy charts for this archived report
+    charts_dir = "docs/charts"
+    if os.path.isdir(charts_dir):
+        report_charts_dir = os.path.join(persistent_archive, f"charts_{suffix}")
+        if os.path.exists(report_charts_dir):
+            shutil.rmtree(report_charts_dir)
+        shutil.copytree(charts_dir, report_charts_dir)
+        print("✅ Copied charts for archive:", charts_dir, "->", report_charts_dir)
+
+    # Copy resources folder to persistent archive if it exists
     if new_res_dir and os.path.isdir(new_res_dir):
-        archive_res_dest = os.path.join(archive_dir, os.path.basename(new_res_dir))
+        archive_res_dest = os.path.join(persistent_archive, os.path.basename(new_res_dir))
         print(f"Attempting to copy resources to: {archive_res_dest}")
         
         if os.path.exists(archive_res_dest):
@@ -134,9 +151,30 @@ for f in files:
     shutil.copyfile(source_qmd, dest_qmd_path)
     print("Archived source:", source_qmd, "->", dest_qmd_path)
 
-    # Update archive/index.qmd with all reports currently in docs/archive
+    # Update archive/index.qmd with all reports from persistent archive
     qmd_file_path = "archive/index.qmd"
-    update_archive_qmd(archive_dir, qmd_file_path)
+    update_archive_qmd(qmd_file_path)
+
+    # CRITICAL: Copy all archived reports from persistent storage to docs/archive for deployment
+    print("\n--- Copying archived reports to docs/archive for deployment ---")
+    docs_archive = "docs/archive"
+    os.makedirs(docs_archive, exist_ok=True)
+
+    if os.path.exists(persistent_archive):
+        for item in os.listdir(persistent_archive):
+            src = os.path.join(persistent_archive, item)
+            dst = os.path.join(docs_archive, item)
+            
+            if os.path.isfile(src):
+                shutil.copy2(src, dst)
+                print(f"📄 Copied to docs/archive: {item}")
+            elif os.path.isdir(src):
+                if os.path.exists(dst):
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+                print(f"📁 Copied folder to docs/archive: {item}")
+    
+    print("✅ All archived content ready for deployment")
 
 
 
