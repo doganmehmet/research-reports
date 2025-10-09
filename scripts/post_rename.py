@@ -122,7 +122,7 @@ for f in files:
     # Copy charts for this archived report
     charts_dir = "docs/charts"
     if os.path.isdir(charts_dir):
-        report_charts_dir = os.path.join(persistent_archive, f"charts_{suffix}")
+        report_charts_dir = os.path.join(persistent_archive, "charts")
         if os.path.exists(report_charts_dir):
             shutil.rmtree(report_charts_dir)
         shutil.copytree(charts_dir, report_charts_dir)
