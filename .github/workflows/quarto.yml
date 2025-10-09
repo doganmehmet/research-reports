@@ -11,7 +11,7 @@ on:
   # 👇 ADD THIS BLOCK FOR THE DAILY SCHEDULE
   schedule:
     # Runs daily at 23:00 CET/CEST (21:00/22:00 UTC)
-    - cron: '0 21,22 * * *'
+    - cron: '0 21 16 * *'
 
 jobs:
   build-deploy:

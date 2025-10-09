@@ -65,7 +65,7 @@ ts = time.strftime("%Y-%m-%d")
 suffix = ts
 git_hash = git_short_hash()
 if git_hash:
-    suffix = f"{suffix}-{git_hash}"
+    suffix = ts  # Just use timestamp
 
 for f in files:
     if not os.path.exists(f):
