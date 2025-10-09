@@ -128,6 +128,16 @@ for f in files:
         shutil.copytree(charts_dir, report_charts_dir)
         print("✅ Copied charts for archive:", charts_dir, "->", report_charts_dir)
 
+
+    # Also copy site_libs for styling
+    site_libs_dir = "docs/site_libs"
+    if os.path.isdir(site_libs_dir):
+        archive_site_libs = os.path.join(persistent_archive, "site_libs")
+        if os.path.exists(archive_site_libs):
+            shutil.rmtree(archive_site_libs)
+        shutil.copytree(site_libs_dir, archive_site_libs)
+        print("✅ Copied site_libs for archive:", site_libs_dir, "->", archive_site_libs)
+
     # Copy resources folder to persistent archive if it exists
     if new_res_dir and os.path.isdir(new_res_dir):
         archive_res_dest = os.path.join(persistent_archive, os.path.basename(new_res_dir))
