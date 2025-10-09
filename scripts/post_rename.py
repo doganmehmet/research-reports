@@ -76,14 +76,22 @@ for f in files:
     new_base = f"{base}_{suffix}"
     new_name = os.path.join(dirn, new_base + ext)
 
+    # Check for resources folder BEFORE renaming
+    res_dir = os.path.join(dirn, base + "_files")
+    has_resources = os.path.isdir(res_dir)
+    
+    print(f"Processing report: {f}")
+    print(f"Resources directory exists: {has_resources}")
+    if has_resources:
+        print(f"Resources location: {res_dir}")
+
     # Rename the main report
     shutil.move(f, new_name)
     print("Renamed:", f, "->", new_name)
 
     # Rename resources folder if exists
-    res_dir = os.path.join(dirn, base + "_files")
     new_res_dir = None
-    if os.path.isdir(res_dir):
+    if has_resources:
         new_res = os.path.join(dirn, new_base + "_files")
         shutil.move(res_dir, new_res)
         new_res_dir = new_res
@@ -94,20 +102,28 @@ for f in files:
     shutil.copyfile(new_name, stable)
     print("Copied latest:", new_name, "->", stable)
 
-    # Move dated report into archive IN THE DOCS FOLDER
+    # Create archive directory
     archive_dir = os.path.join(dirn, "archive")
     os.makedirs(archive_dir, exist_ok=True)
+    
+    # Copy dated report to archive
     archive_dest = os.path.join(archive_dir, os.path.basename(new_name))
     shutil.copy(new_name, archive_dest)
     print("Copied to archive:", new_name, "->", archive_dest)
 
-    # IMPORTANT: Also copy the resources folder to archive
+    # Copy the resources folder to archive
     if new_res_dir and os.path.isdir(new_res_dir):
         archive_res_dest = os.path.join(archive_dir, os.path.basename(new_res_dir))
+        print(f"Attempting to copy resources to: {archive_res_dest}")
+        
         if os.path.exists(archive_res_dest):
-            shutil.rmtree(archive_res_dest)  # Remove if exists
+            print(f"Removing existing archive resources: {archive_res_dest}")
+            shutil.rmtree(archive_res_dest)
+        
         shutil.copytree(new_res_dir, archive_res_dest)
-        print("Copied resources to archive:", new_res_dir, "->", archive_res_dest)
+        print("✅ Copied resources to archive:", new_res_dir, "->", archive_res_dest)
+    else:
+        print("⚠️  No resources folder found to copy to archive")
 
     # Archive the source QMD
     source_qmd = "report.qmd"
