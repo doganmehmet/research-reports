@@ -38,7 +38,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install jupyter pyyaml pandas numpy pandas_datareader yfinance matplotlib openai google-genai
+          pip install jupyter pyyaml pandas numpy pandas_datareader yfinance matplotlib openai google-genai anthropic
 
 
       # 4. Render the site
@@ -48,7 +48,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_SECRET: ${{ secrets.GEMINI_API_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
 
       # 👇 ADD THIS NEW STEP HERE
       # 5. Commit and push the updated archive file

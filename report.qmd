@@ -6,12 +6,23 @@ format: html
 ```{python}
 #| echo: false
 #| include: false
-# import libraries
-import pandas_datareader.data as web
-import pandas as pd
-import yfinance as yf
-from datetime import date
+"""
+Library Imports
+---------------
+This cell imports all necessary libraries for:
+- Data fetching: pandas_datareader (FRED API), yfinance (Yahoo Finance)
+- Data manipulation: pandas
+- Visualization: matplotlib with various formatting utilities
+- Date handling: datetime
+"""
 
+# Data fetching libraries
+import pandas_datareader.data as web  # FRED economic data
+import pandas as pd                    # Data manipulation
+import yfinance as yf                  # Stock market data
+from datetime import date              # Current date for report timestamp
+
+# Visualization libraries
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mticker
@@ -21,163 +32,280 @@ from matplotlib.ticker import FuncFormatter, PercentFormatter, MultipleLocator
 ```{python}
 #| echo: false
 #| include: false
-# IMPORT ALL DATA SETS
+"""
+Data Fetching and Preparation
+------------------------------
+This cell fetches all financial and economic data from various sources:
+- FRED (Federal Reserve Economic Data): Inflation, GDP, unemployment, Fed data, yields, etc.
+- Yahoo Finance: Stock indices, VIX, commodities (gold, oil)
+- Multpl.com: S&P 500 P/E ratios
+
+All time series are converted to pandas Period indices (monthly 'M' or quarterly 'Q')
+for consistent date handling and eventual JSON serialization.
+"""
+
+# ============================================================================
+# EQUITY INDICES
+# ============================================================================
 
 # MSCI World Equity Index
+# Ticker: ^990100-USD-STRD (Yahoo Finance)
+# Frequency: Monthly, Close prices, auto-adjusted for splits/dividends
 msci = yf.download("^990100-USD-STRD", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
 msci.rename(columns={"^990100-USD-STRD":"msci"}, inplace=True)
-msci.index = msci.index.to_period('M')
+msci.index = msci.index.to_period('M')  # Convert to period index for consistency
 
 
-#### Inflation
-# monthly YoY US inflation
-# https://fred.stlouisfed.org/series/CPIAUCSL
-# https://tradingeconomics.com/united-states/inflation-cpi
+# ============================================================================
+# MACROECONOMIC INDICATORS
+# ============================================================================
 
+# INFLATION (CPI)
+# Source: FRED - Consumer Price Index for All Urban Consumers (CPIAUCSL)
+# Source: FRED - Consumer Price Index for All Urban Consumers: All Items Less Food and Energy (CPILFESL - Core CPI)
+# Links: https://fred.stlouisfed.org/series/CPIAUCSL
+#        https://tradingeconomics.com/united-states/inflation-cpi
+# Calculation: Year-over-year percentage change (current month vs. 12 months ago)
 inflation = web.get_data_fred(["CPIAUCSL", "CPILFESL"], start="1900-01-01")
 inflation.rename(columns= {"CPIAUCSL":"cpi", "CPILFESL":"core_cpi"}, inplace=True)
-inflation = inflation.pct_change(12)*100
-inflation = inflation.round(1)
+inflation = inflation.pct_change(12) * 100  # YoY % change: (current/12 months ago - 1) * 100
+inflation = inflation.round(1)              # Round to 1 decimal place
 inflation.index = inflation.index.to_period('M')
 
 
-# GDP (Real)
-# https://fred.stlouisfed.org/series/GDPC1
-    # compounded annual rate of change: [t/t(-1)]^4 -1  
-# https://www.bea.gov/data/gdp/gross-domestic-product
-
+# GDP (REAL GROSS DOMESTIC PRODUCT)
+# Source: FRED - Real Gross Domestic Product (GDPC1)
+# Links: https://fred.stlouisfed.org/series/GDPC1
+#        https://www.bea.gov/data/gdp/gross-domestic-product
+# Calculation: Compounded annual rate of change: [t/t(-1)]^4 - 1
+# Note: FRED provides quarterly data; we annualize the quarter-over-quarter growth
 gdp = web.get_data_fred("GDPC1", start="1900-01-01")
 gdp.rename(columns= {"GDPC1":"gdp"}, inplace=True)
+# Annualize quarterly growth: compound QoQ growth rate raised to power 4
+gdp = ((gdp / gdp.shift(1))**4 - 1) * 100  # Convert to percentage
+gdp.dropna(inplace=True)                   # Remove NaN from first row
+gdp.index = gdp.index.to_period('Q')       # Convert to quarterly period index
+gdp = gdp.round(1)                         # Round to 1 decimal place
 
-gdp = ((gdp / gdp.shift(1))**4 - 1)*100
-gdp.dropna(inplace=True)
-gdp.index = gdp.index.to_period('Q')
-gdp = gdp.round(1)
-
-# HOUSEHOLD DEBT
-#  Household Debt Service Payments as a Percent of Disposable Personal Income (TDSP)
-#  Seasonally adjusted
+# HOUSEHOLD DEBT SERVICE RATIO
+# Source: FRED - Household Debt Service Payments as a Percent of Disposable Personal Income (TDSP)
+# Link: https://fred.stlouisfed.org/series/TDSP
+# Note: Seasonally adjusted, quarterly frequency
+# Measures: % of disposable income used for debt payments (mortgages, consumer debt, etc.)
 hdebt = web.get_data_fred("TDSP", start = "1900-01-01")
-hdebt.index = hdebt.index.to_period('Q')
+hdebt.index = hdebt.index.to_period('Q')  # Convert to quarterly period index
 hdebt.rename(columns= {"TDSP":"household_debt"}, inplace=True)
 
-# UNEMPLOYMENT
-# https://fred.stlouisfed.org/series/UNRATE
+# UNEMPLOYMENT RATE
+# Source: FRED - Unemployment Rate (UNRATE)
+# Link: https://fred.stlouisfed.org/series/UNRATE
+# Note: Seasonally adjusted, monthly frequency
+# Measures: % of labor force that is unemployed and actively seeking employment
 unemployment = web.get_data_fred("UNRATE", start = "1900-01-01")
-unemployment.index = unemployment.index.to_period('M')
+unemployment.index = unemployment.index.to_period('M')  # Convert to monthly period index
 unemployment.rename(columns= {"UNRATE":"unemployment_rate"}, inplace=True)
 
-# FED B/S Assets
-# https://fred.stlouisfed.org/series/WALCL#
-# frequency monthly, aggregation method: Average
-
-# Download WALCL directly from FRED
+# FEDERAL RESERVE BALANCE SHEET (TOTAL ASSETS)
+# Source: FRED - All Federal Reserve Banks: Total Assets (WALCL)
+# Link: https://fred.stlouisfed.org/series/WALCL
+# Note: Weekly data aggregated to monthly using mean
+# Measures: Total assets held by the Federal Reserve (in millions of dollars)
+# Important indicator of monetary policy and quantitative easing
 fed_assets = web.get_data_fred("WALCL", start="1900-01-01")
-fed_assets = fed_assets.resample('M').mean()
-fed_assets.index = fed_assets.index.to_period('M')
+fed_assets = fed_assets.resample('M').mean()  # Aggregate weekly to monthly (average)
+fed_assets.index = fed_assets.index.to_period('M')  # Convert to monthly period index
 fed_assets.rename(columns= {"WALCL":"fed_assets"}, inplace=True)
 
-# SP500, Nasdaq 100, Dow Jones  
+# US MAJOR STOCK INDICES
+# Source: Yahoo Finance
+# Tickers:
+#   ^GSPC - S&P 500 Index
+#   ^NDX  - NASDAQ 100 Index
+#   ^DJI  - Dow Jones Industrial Average
+# Note: Monthly closing prices, auto-adjusted for splits and dividends
+# Index kept as timestamp (not period) for returns calculation later
 tickers = ["^GSPC", "^NDX", "^DJI"]
 stock_data = yf.download(tickers, start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
-stock_data.index = stock_data.index.to_period('M').to_timestamp('M') # the last index value should ideally be adjusted to today or some last business day
+# Convert to period then back to timestamp at end of month for flexibility
+stock_data.index = stock_data.index.to_period('M').to_timestamp('M')  # Last value represents most recent day
 stock_data.rename(columns= {"^GSPC":"SP500",
-                                "^NDX":"NDX",
-                                "^DJI": "DJI"}, inplace=True)
+                            "^NDX":"NDX",
+                            "^DJI": "DJI"}, inplace=True)
 
 
-# SP500 P/E Ratio
+# S&P 500 PRICE-TO-EARNINGS RATIO
+# Source: Multpl.com (scrapes Robert Shiller's data)
+# Link: https://www.multpl.com/s-p-500-pe-ratio/table/by-month
+# Note: Monthly P/E ratios based on trailing 12-month earnings
 def fetch_multpl_pe_by_month():
+    """
+    Fetch S&P 500 P/E ratio data from Multpl.com.
+
+    Returns:
+        pd.DataFrame: DataFrame with date index and 'pe' column
+
+    Process:
+        1. Scrape HTML table from Multpl.com
+        2. Clean P/E values (remove non-numeric characters)
+        3. Convert to monthly period index
+        4. Remove duplicate months (keep last value if multiple entries)
+    """
     url = "https://www.multpl.com/s-p-500-pe-ratio/table/by-month"
-    tables = pd.read_html(url)
-    df = tables[0]
+    tables = pd.read_html(url)  # Parse HTML tables
+    df = tables[0]              # Get first table
     df.columns = ["date", "pe"]
-    
-    # Clean PE column: remove non-numeric characters
+
+    # Clean PE column: remove non-numeric characters (e.g., 'est' suffix)
     df["pe"] = df["pe"].astype(str).str.replace(r"[^0-9\.\-]", "", regex=True)
-    df["pe"] = pd.to_numeric(df["pe"], errors="coerce")
-    
+    df["pe"] = pd.to_numeric(df["pe"], errors="coerce")  # Convert to numeric, NaN for errors
+
     # Convert Date to datetime
     df["date"] = pd.to_datetime(df["date"])
-    df["YearMonth"] = df["date"].dt.to_period("M")
-    df = df.sort_values("date").drop_duplicates("YearMonth", keep="last")
-    
+    df["YearMonth"] = df["date"].dt.to_period("M")  # Create period column for deduplication
+    df = df.sort_values("date").drop_duplicates("YearMonth", keep="last")  # Keep latest value per month
+
     # Drop helper column
     df = df.drop(columns=["YearMonth"]).reset_index(drop=True)
-    
-    
+
     return df
 
+# Execute function and prepare data
 pe = fetch_multpl_pe_by_month()
-
 pe = pe.set_index("date")
-pe.index = pe.index.to_period('M')
+pe.index = pe.index.to_period('M')  # Convert to monthly period index
 
-# VIX: CBOE volatility index
+# ============================================================================
+# MARKET VOLATILITY AND RISK INDICATORS
+# ============================================================================
+
+# VIX (CBOE VOLATILITY INDEX)
+# Source: Yahoo Finance, ticker ^VIX
+# Note: Daily data aggregated to monthly using mean
+# Measures: Expected 30-day volatility of S&P 500 (fear gauge)
+# Higher VIX = higher expected volatility = higher market uncertainty
 vix = yf.download("^VIX", start="1900-01-01", interval="1d", auto_adjust=True)['Close']
-vix = vix.resample('M').mean()
+vix = vix.resample('M').mean()  # Average daily VIX values for each month
 vix.index = vix.index.to_period('M')
 vix.rename(columns= {"^VIX":"VIX"}, inplace=True)
 
-# FED TARGET RATE
-# https://fred.stlouisfed.org/series/DFEDTARU
+# ============================================================================
+# FEDERAL RESERVE POLICY INDICATORS
+# ============================================================================
+
+# FEDERAL FUNDS TARGET RATE (UPPER LIMIT)
+# Source: FRED - Federal Funds Target Range - Upper Limit (DFEDTARU)
+# Link: https://fred.stlouisfed.org/series/DFEDTARU
+# Note: Daily data, starting from Dec 16, 2008 (when Fed adopted target range)
+# We filter to keep only dates where the rate changed (not every day)
 fedTargetRate = web.get_data_fred('DFEDTARU', start="2008-12-16")
 fedTargetRate.rename(columns={'DFEDTARU':'fed_target_rate'}, inplace=True)
-fedTargetRate['change'] = fedTargetRate['fed_target_rate'].diff()
-fedTargetRate.dropna(inplace=True)
-fedTargetRateChange = fedTargetRate[fedTargetRate['change'] != 0]
+fedTargetRate['change'] = fedTargetRate['fed_target_rate'].diff()  # Calculate day-to-day change
+fedTargetRate.dropna(inplace=True)  # Remove first row (NaN from diff)
+fedTargetRateChange = fedTargetRate[fedTargetRate['change'] != 0]  # Keep only dates with rate changes
 
+# ============================================================================
+# FIXED INCOME / TREASURY YIELDS
+# ============================================================================
 
-# US 2Y vs 10Y yields
-# Get 2Y and 10Y Treasury Yields from FRED
+# US TREASURY YIELDS (2-YEAR AND 10-YEAR)
+# Source: FRED
+#   DGS2  - 2-Year Treasury Constant Maturity Rate
+#   DGS10 - 10-Year Treasury Constant Maturity Rate
+# Note: Daily data aggregated to monthly using mean
+# The spread (2Y - 10Y) is an important recession indicator (inverted yield curve)
 usYields = web.get_data_fred(["DGS2", "DGS10"], start="1976-06-01")
-usYields = usYields.dropna()
-usYields_monthly = usYields.resample('M').mean()
+usYields = usYields.dropna()  # Remove days with missing data
+usYields_monthly = usYields.resample('M').mean()  # Average daily yields for each month
 usYields_monthly.index = usYields_monthly.index.to_period('M')
-# usYields_monthly["SR-LR"] = usYields_monthly["DGS2"] - usYields_monthly["DGS10"]
+# Note: SR-LR spread can be calculated in chart code: usYields_monthly["SR-LR"] = usYields_monthly["DGS2"] - usYields_monthly["DGS10"]
 
+# ============================================================================
+# RECESSION INDICATORS
+# ============================================================================
 
-# U.S. PAST RECESSIONS
-# https://fred.stlouisfed.org/series/JHDUSRGDPBR
+# U.S. PAST RECESSIONS (HISTORICAL PERIODS)
+# Source: FRED - Hamilton Recession Indicator Based on GDP (JHDUSRGDPBR)
+# Link: https://fred.stlouisfed.org/series/JHDUSRGDPBR
+# Note: Quarterly data, value = 1 during recession periods, 0 otherwise
 recessions = web.get_data_fred("JHDUSRGDPBR", start="1900-01-01")
 recessions.rename(columns={"JHDUSRGDPBR": "recession"}, inplace=True)
 recessions.index = recessions.index.to_period('Q')
 
-# ICE BofA US High Yield Index Option-Adjusted Spread
+# ============================================================================
+# CREDIT RISK INDICATORS
+# ============================================================================
+
+# ICE BOFA US HIGH YIELD INDEX OPTION-ADJUSTED SPREAD
+# Source: FRED - ICE BofA US High Yield Index Option-Adjusted Spread (BAMLH0A0HYM2)
+# Link: https://fred.stlouisfed.org/series/BAMLH0A0HYM2
+# Note: Daily data aggregated to monthly using last value
+# Measures: Spread between high-yield corporate bonds and Treasury curve
+# Wider spreads = higher perceived credit risk / financial stress
 option_adjusted_spread = web.get_data_fred("BAMLH0A0HYM2", start="1900-01-01")
-option_adjusted_spread = option_adjusted_spread.resample("M").last()
+option_adjusted_spread = option_adjusted_spread.resample("M").last()  # Use last value of month
 option_adjusted_spread.index = option_adjusted_spread.index.to_period('M')
 option_adjusted_spread.rename(columns={'BAMLH0A0HYM2':'spread'}, inplace=True)
 
-# GOLD
+# ============================================================================
+# COMMODITIES (SAFE HAVEN & ENERGY)
+# ============================================================================
+
+# GOLD PRICES
+# Source: Yahoo Finance, ticker GC=F (Gold Futures)
+# Note: Monthly closing prices
+# Gold is a traditional safe-haven asset during market turbulence
 gold = yf.download("GC=F", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
 gold.index = gold.index.to_period('M')
 gold.rename(columns= {"GC=F":"gold"}, inplace=True)
 
-# BRENT OIL
+# BRENT CRUDE OIL PRICES
+# Source: Yahoo Finance, ticker BZ=F (Brent Crude Futures)
+# Note: Monthly closing prices
+# Oil prices reflect global economic activity and energy market conditions
 brent = yf.download("BZ=F", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
 brent.index = brent.index.to_period('M')
 brent.rename(columns= {"BZ=F":"brent"}, inplace=True)
 
 
-# we convert the index when creating dictionary
+# ============================================================================
+# DATA AGGREGATION FOR AI ANALYSIS
+# ============================================================================
+# Combine all time series data into a single dictionary for JSON serialization
+# and AI model consumption.
+#
+# IMPORTANT: Period indices must be converted to strings for JSON compatibility
+# Format: {str(period): {column: value, ...}, ...}
+# Example: {"2024-01": {"cpi": 3.4, "core_cpi": 3.9}, "2024-02": {...}, ...}
+
 all_data = {
+    # Macroeconomic indicators
     "inflation": {str(k): v for k, v in inflation.to_dict(orient="index").items()},
     "unemployment": {str(k): v for k, v in unemployment.to_dict(orient="index").items()},
     "gdp": {str(k): v for k, v in gdp.to_dict(orient="index").items()},
-    "fed_assets": {str(k): v for k, v in fed_assets.to_dict(orient="index").items()},
     "household_debt": {str(k): v for k, v in hdebt.to_dict(orient="index").items()},
+
+    # Federal Reserve data
+    "fed_assets": {str(k): v for k, v in fed_assets.to_dict(orient="index").items()},
+    "fed_target_rate": {str(k): v for k, v in fedTargetRateChange.to_dict(orient="index").items()},
+
+    # Equity markets
     "msci": {str(k): v for k, v in msci.to_dict(orient="index").items()},
     "us_equities": {str(k): v for k, v in stock_data.to_dict(orient="index").items()},
     "sp500_pe": {str(k): v for k, v in pe.to_dict(orient="index").items()},
+
+    # Risk and volatility indicators
     "vix": {str(k): v for k, v in vix.to_dict(orient="index").items()},
-    "us_recessions": {str(k): v for k, v in recessions.to_dict(orient="index").items()},
-    "fed_target_rate": {str(k): v for k, v in fedTargetRateChange.to_dict(orient="index").items()},
-    "us_yields": {str(k): v for k, v in usYields_monthly.to_dict(orient="index").items()},
     "bofa_high_yield_option_adjusted_spread": {str(k): v for k, v in option_adjusted_spread.to_dict(orient="index").items()},
+
+    # Fixed income
+    "us_yields": {str(k): v for k, v in usYields_monthly.to_dict(orient="index").items()},
+
+    # Past US Recessions
+    "us_recessions": {str(k): v for k, v in recessions.to_dict(orient="index").items()},
+
+    # Commodities
     "gold": {str(k): v for k, v in gold.to_dict(orient="index").items()},
     "brent_oil": {str(k): v for k, v in brent.to_dict(orient="index").items()}
-    
 }
 
 ```
@@ -188,7 +316,7 @@ all_data = {
 #| echo: false
 
 import json
-today = today = date.today().strftime("%B %d, %Y")
+today = date.today().strftime("%B %d, %Y")
 
 
 # --- BUILD THE PROMPT ---
@@ -257,6 +385,30 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 #| output: 'asis'
 #| cache: true
 
+import anthropic
+
+client = anthropic.Anthropic()
+
+message = client.messages.create(
+    model="claude-sonnet-4-5",
+    # max_tokens=8192,
+    messages=[
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+)
+ai_response_claude = message.content
+```
+
+
+
+```{python}
+#| echo: false
+#| output: 'asis'
+#| cache: true
+
 # from openai import OpenAI
 
 # client = OpenAI()
@@ -299,33 +451,6 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 ```
 
 
-```{python}
-#| echo: false
-#| output: 'asis'
-#| cache: true
-
-# DEEPSEEK
-
-
-# from openai import OpenAI
-
-# client = OpenAI(
-#     # api_key=os.getenv('DEEPSEEK_API_KEY'),
-#     api_key=os.environ['DEEPSEEK_API_KEY'],  # Direct from environment
-#     base_url="https://api.deepseek.com"
-# )
-
-# response = client.chat.completions.create(
-#     model="deepseek-reasoner",  # R1 model
-#     messages=[
-#         {"role": "user", "content": prompt}
-#     ],
-#     temperature=0.1
-# )
-
-# ai_response_ds = response.choices[0].message.content
-
-```
 
 ```{python}
 #| echo: false
@@ -592,74 +717,75 @@ plt.savefig(
 
 # INFLATION
 
-plot_data = inflation.tail(13) 
+plot_data = inflation.tail(13)
+del plot_data['core_cpi'] 
+ax = plot_data.plot(kind='bar', legend=True)
 
-def custom_date_formatter(x, pos):
-    dt = mdates.num2date(x)  # convert number to datetime
-    if dt.month == 1:  # show year only in January
-        return dt.strftime("%b\n%Y")
+# --- NEW: Format x-axis labels to show Month and Year ---
+# Get the PeriodIndex from your dataframe
+periods = plot_data.index
+new_labels_text = []
+prev_year = None
+
+# Loop through each period to create the custom label
+for period in periods:
+    current_month_name = period.strftime('%b') # e.g., 'Oct'
+    current_year = period.year
+
+    # If it's the first item or the year has changed, show "Month\nYear"
+    if prev_year is None or current_year != prev_year:
+        new_labels_text.append(f"{current_month_name}\n{current_year}")
+    # Otherwise, just show "Month"
     else:
-        return dt.strftime("%b")
+        new_labels_text.append(current_month_name)
+    
+    prev_year = current_year
 
+# Apply the newly created labels to the x-axis
+ax.set_xticklabels(new_labels_text, rotation=0, ha='center')
+# -----------------------------------------------------------
 
-
-# --- Plot ---
-fig, ax = plt.subplots()
-bars = ax.bar(plot_data.index.to_timestamp(), plot_data['cpi'], color="#0612f2", width=20)
+# Set titles and labels
+# (You can add your titles and labels here if you have them)
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
 
 # To access the figure:
+fig = ax.get_figure()
 fig.patch.set_facecolor("#f5f5f5")  # figure background
-
-# Add value labels above bars
-for bar, val in zip(bars, plot_data['cpi']):
-    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
-            f"{val:.1f}", ha="center", va="bottom", fontsize=9)
-
-# --- Title & subtitle ---
-# plt.suptitle("CPI: 2.4% YoY (vs. 2.8% in Feb)",
-#              fontsize=16, fontweight="bold", x=0.01, ha="left")
-# plt.title("Core CPI: 2.8% YoY, the lowest level since 2011",
-#           fontsize=12, loc="left")
 
 ax.yaxis.set_label_position("right")
 ax.yaxis.tick_right()
 
-# --- Format x-axis (monthly ticks, rotated) ---
-ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
-#ax.xaxis.set_major_formatter(mdates.DateFormatter("%b\n%Y"))
-ax.xaxis.set_major_formatter(FuncFormatter(custom_date_formatter))
-plt.xticks(rotation=0)
-ax.set_xlim(plot_data.index.to_timestamp().min() - pd.Timedelta(days=15),
-            plot_data.index.to_timestamp().max() + pd.Timedelta(days=15))
+# show y-axis values as %s
+ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=0))
 
+# setting the last x-axis value to MTD
+# This runs AFTER the date formatting to override the last label
+labels = ax.get_xticklabels()
+new_labels_final = [label.get_text() for label in labels]
 
-# --- Format y-axis ---
-ax.set_ylim(0, 4)
-ax.set_ylabel("%", fontsize=10)
-ax.yaxis.set_major_formatter(lambda x, pos: f"{x:.1f}%")
+ax.set_xticklabels(new_labels_final)
 
-# --- Gridlines ---
-ax.grid(True, axis="y", linestyle="--", alpha=0.5)
-ax.grid(False, axis="x")
 
 # --- Remove top/right spines ---
-for spine in ["top", "right", "left"]:
+for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
-# --- Data source note ---
-plt.figtext(0.01, -0.02, "Data source: BLS", ha="left", fontsize=9, fontweight="bold")
+# Add a horizontal line at y=0 for reference
+ax.axhline(0, color='grey', linewidth=0.8, linestyle='--')
 
-# plt.tight_layout()
+plt.xlabel(None) # Remove the default x-axis label
+plt.tight_layout() # Adjust layout
 
 plt.savefig(
     'charts/US Inflation Rate (YoY).png', # Filename and extension
-    dpi=300,             # Dots per inch for high resolution
-    bbox_inches='tight'  # Trims extra whitespace
+    dpi=300,            # Dots per inch for high resolution
+    bbox_inches='tight'   # Trims extra whitespace
 )
-# plt.show()
+
+plt.show() # Display the plot
 
 ```
 
@@ -675,7 +801,7 @@ plt.savefig(
 
 plot_data = inflation[inflation.index >= "2020-01-01"]
 
-ax = plot_data.plot(color='#0612f2')
+ax = plot_data.plot() # color='#0612f2'
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -760,9 +886,40 @@ plt.savefig(
 #| include: false
 
 # GDP
-plot_data = gdp.tail(12)
+plot_data = gdp.tail(12)  # This will now show last 12 quarters
 
-ax = plot_data.plot(kind='bar', color='#0612f2')
+ax = plot_data.plot(kind='bar', legend=True)
+
+# --- Format x-axis labels to show Quarter and Year ---
+# Get the PeriodIndex from your dataframe
+periods = plot_data.index
+new_labels_text = []
+prev_year = None
+
+# Loop through each period to create the custom label
+for period in periods:
+    # Get quarter information
+    current_quarter = period.quarter  # e.g., 1, 2, 3, 4
+    current_year = period.year
+    
+    # Format as Q1, Q2, Q3, or Q4
+    current_quarter_label = f"Q{current_quarter}"
+    
+    # If it's the first item or the year has changed, show "Q#\nYear"
+    if prev_year is None or current_year != prev_year:
+        new_labels_text.append(f"{current_quarter_label}\n{current_year}")
+    # Otherwise, just show "Q#"
+    else:
+        new_labels_text.append(current_quarter_label)
+    
+    prev_year = current_year
+
+# Apply the newly created labels to the x-axis
+ax.set_xticklabels(new_labels_text, rotation=0, ha='center')
+# -----------------------------------------------------------
+
+# Set titles and labels
+# (You can add your titles and labels here if you have them)
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -771,30 +928,37 @@ ax.set_facecolor('#f5f5f5')  # Set plot background color
 fig = ax.get_figure()
 fig.patch.set_facecolor("#f5f5f5")  # figure background
 
-# Get the container from the existing plot
-bar_container = ax.containers[0]
-
-# Add bar labels
-ax.bar_label(bar_container)
-
-
-ax.yaxis.tick_right()
 ax.yaxis.set_label_position("right")
-ax.yaxis.set_major_formatter(PercentFormatter(xmax=100))  # if values like 2.4 = 2.4%
-ax.yaxis.set_major_locator(MultipleLocator(1))            # 1% steps
+ax.yaxis.tick_right()
 
+# show y-axis values as %s
+ax.yaxis.set_major_formatter(PercentFormatter(xmax=100, decimals=0))
+
+# setting the last x-axis value to MTD
+# This runs AFTER the date formatting to override the last label
+labels = ax.get_xticklabels()
+new_labels_final = [label.get_text() for label in labels]
+
+ax.set_xticklabels(new_labels_final)
 
 # --- Remove top/right spines ---
-for spine in ["top", "left", "right"]:
+for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
+
+# Add a horizontal line at y=0 for reference
+ax.axhline(0, color='grey', linewidth=0.8, linestyle='--')
+
+plt.xlabel(None) # Remove the default x-axis label
+plt.tight_layout() # Adjust layout
 
 plt.savefig(
     'charts/US GDP Growth Rate (YoY).png', # Filename and extension
-    dpi=300,             # Dots per inch for high resolution
-    bbox_inches='tight'  # Trims extra whitespace
+    dpi=300,            # Dots per inch for high resolution
+    bbox_inches='tight'   # Trims extra whitespace
 )
 
-# plt.show()
+plt.show() # Display the plot
+
 ```
 
 
@@ -1179,6 +1343,40 @@ CHART_FILENAME_LIBRARY = {
 }
 
 ```
+
+# CLAUDE SONNET 4.5
+```{python}
+#| echo: false
+#| output: 'asis'
+
+## AUTOMATION OF CHART PLACEMENT
+
+import re
+
+
+# The text from the Gemini API
+ai_response_text = ai_response_claude
+
+segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
+
+for segment in segments:
+    if segment.startswith('[CHART:'):
+        chart_description = segment[7:-1].strip()
+        
+        # Look up the filename in your new library
+        chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
+        
+        if chart_filename:
+            # Print the markdown image tag using the found filename
+            print(f"\n![{chart_description}]({chart_filename})\n")
+        else:
+            print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
+            
+    else:
+        # This is a normal text segment, so just print it
+        print(segment, end="")
+```
+
 
 # OPEANAI GBT-5
 ```{python}
