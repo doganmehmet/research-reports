@@ -385,12 +385,16 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 #| output: 'asis'
 #| cache: true
 
+
+prompt = f"""
+First, provide a brief, up-to-date summary of the global financial markets covering the last three months up to today, {today}. When writing the summary, pay attention to indicators and trends that could suggest similarities to past U.S. market cycles. Focus on global equities, major stock indices, and global yields. When providing figures, prioritize the most recent month and year-to-date figures, if available. Limit the global summary to 3–5 sentences. The majority of the report should focus on the U.S. growth stock market."""
+
 import anthropic
 
 client = anthropic.Anthropic()
 
 message = client.messages.create(
-    model="claude-sonnet-4-5",
+    model="claude-sonnet-4-5-20250929",
     max_tokens=8192,
     messages=[
         {
