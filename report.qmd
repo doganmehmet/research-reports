@@ -19,6 +19,7 @@ This cell imports all necessary libraries for:
 # Data fetching libraries
 import pandas_datareader.data as web  # FRED economic data
 import pandas as pd                    # Data manipulation
+import numpy as np
 import yfinance as yf                  # Stock market data
 from datetime import date              # Current date for report timestamp
 
@@ -54,7 +55,7 @@ for consistent date handling and eventual JSON serialization.
 msci = yf.download("^990100-USD-STRD", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
 msci.rename(columns={"^990100-USD-STRD":"msci"}, inplace=True)
 msci.index = msci.index.to_period('M')  # Convert to period index for consistency
-
+msci = msci.round(4)     
 
 # ============================================================================
 # MACROECONOMIC INDICATORS
@@ -95,6 +96,7 @@ gdp = gdp.round(1)                         # Round to 1 decimal place
 hdebt = web.get_data_fred("TDSP", start = "1900-01-01")
 hdebt.index = hdebt.index.to_period('Q')  # Convert to quarterly period index
 hdebt.rename(columns= {"TDSP":"household_debt"}, inplace=True)
+hdebt = hdebt.round(4)
 
 # UNEMPLOYMENT RATE
 # Source: FRED - Unemployment Rate (UNRATE)
@@ -115,6 +117,7 @@ fed_assets = web.get_data_fred("WALCL", start="1900-01-01")
 fed_assets = fed_assets.resample('M').mean()  # Aggregate weekly to monthly (average)
 fed_assets.index = fed_assets.index.to_period('M')  # Convert to monthly period index
 fed_assets.rename(columns= {"WALCL":"fed_assets"}, inplace=True)
+fed_assets = fed_assets.round(4)
 
 # US MAJOR STOCK INDICES
 # Source: Yahoo Finance
@@ -131,6 +134,9 @@ stock_data.index = stock_data.index.to_period('M').to_timestamp('M')  # Last val
 stock_data.rename(columns= {"^GSPC":"SP500",
                             "^NDX":"NDX",
                             "^DJI": "DJI"}, inplace=True)
+
+
+stock_data = stock_data.round(4)
 
 
 # S&P 500 PRICE-TO-EARNINGS RATIO
@@ -187,6 +193,8 @@ vix = yf.download("^VIX", start="1900-01-01", interval="1d", auto_adjust=True)['
 vix = vix.resample('M').mean()  # Average daily VIX values for each month
 vix.index = vix.index.to_period('M')
 vix.rename(columns= {"^VIX":"VIX"}, inplace=True)
+vix = vix.round(4)
+
 
 # ============================================================================
 # FEDERAL RESERVE POLICY INDICATORS
@@ -218,6 +226,8 @@ usYields = usYields.dropna()  # Remove days with missing data
 usYields_monthly = usYields.resample('M').mean()  # Average daily yields for each month
 usYields_monthly.index = usYields_monthly.index.to_period('M')
 # Note: SR-LR spread can be calculated in chart code: usYields_monthly["SR-LR"] = usYields_monthly["DGS2"] - usYields_monthly["DGS10"]
+usYields_monthly = usYields_monthly.round(4)
+
 
 # ============================================================================
 # RECESSION INDICATORS
@@ -257,6 +267,7 @@ option_adjusted_spread.rename(columns={'BAMLH0A0HYM2':'spread'}, inplace=True)
 gold = yf.download("GC=F", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
 gold.index = gold.index.to_period('M')
 gold.rename(columns= {"GC=F":"gold"}, inplace=True)
+gold = gold.round(4)
 
 # BRENT CRUDE OIL PRICES
 # Source: Yahoo Finance, ticker BZ=F (Brent Crude Futures)
@@ -265,8 +276,12 @@ gold.rename(columns= {"GC=F":"gold"}, inplace=True)
 brent = yf.download("BZ=F", start="1900-01-01", interval="1mo", auto_adjust=True)['Close']
 brent.index = brent.index.to_period('M')
 brent.rename(columns= {"BZ=F":"brent"}, inplace=True)
+brent = brent.round(4)
+```
 
 
+
+```{python}
 # ============================================================================
 # DATA AGGREGATION FOR AI ANALYSIS
 # ============================================================================
@@ -277,35 +292,42 @@ brent.rename(columns= {"BZ=F":"brent"}, inplace=True)
 # Format: {str(period): {column: value, ...}, ...}
 # Example: {"2024-01": {"cpi": 3.4, "core_cpi": 3.9}, "2024-02": {...}, ...}
 
+def df_to_dict_with_dates(df):
+    """Convert DataFrame to dict with dates, handling NaN"""
+    df_clean = df.replace({np.nan: None})  # Convert NaN to None
+    result = {"dates": [str(idx) for idx in df_clean.index]}
+    result.update(df_clean.to_dict(orient="list"))
+    return result
+
 all_data = {
     # Macroeconomic indicators
-    "inflation": {str(k): v for k, v in inflation.to_dict(orient="index").items()},
-    "unemployment": {str(k): v for k, v in unemployment.to_dict(orient="index").items()},
-    "gdp": {str(k): v for k, v in gdp.to_dict(orient="index").items()},
-    "household_debt": {str(k): v for k, v in hdebt.to_dict(orient="index").items()},
-
+    "inflation": df_to_dict_with_dates(inflation),
+    "unemployment": df_to_dict_with_dates(unemployment),
+    "gdp": df_to_dict_with_dates(gdp),
+    "household_debt": df_to_dict_with_dates(hdebt),
+    
     # Federal Reserve data
-    "fed_assets": {str(k): v for k, v in fed_assets.to_dict(orient="index").items()},
-    "fed_target_rate": {str(k): v for k, v in fedTargetRateChange.to_dict(orient="index").items()},
-
+    "fed_assets": df_to_dict_with_dates(fed_assets),
+    "fed_target_rate": df_to_dict_with_dates(fedTargetRateChange),
+    
     # Equity markets
-    "msci": {str(k): v for k, v in msci.to_dict(orient="index").items()},
-    "us_equities": {str(k): v for k, v in stock_data.to_dict(orient="index").items()},
-    "sp500_pe": {str(k): v for k, v in pe.to_dict(orient="index").items()},
-
+    "msci": df_to_dict_with_dates(msci),
+    "us_equities": df_to_dict_with_dates(stock_data),
+    "sp500_pe": df_to_dict_with_dates(pe),
+    
     # Risk and volatility indicators
-    "vix": {str(k): v for k, v in vix.to_dict(orient="index").items()},
-    "bofa_high_yield_option_adjusted_spread": {str(k): v for k, v in option_adjusted_spread.to_dict(orient="index").items()},
-
+    "vix": df_to_dict_with_dates(vix),
+    "bofa_high_yield_option_adjusted_spread": df_to_dict_with_dates(option_adjusted_spread),
+    
     # Fixed income
-    "us_yields": {str(k): v for k, v in usYields_monthly.to_dict(orient="index").items()},
-
+    "us_yields": df_to_dict_with_dates(usYields_monthly),
+    
     # Past US Recessions
-    "us_recessions": {str(k): v for k, v in recessions.to_dict(orient="index").items()},
-
+    "us_recessions": df_to_dict_with_dates(recessions),
+    
     # Commodities
-    "gold": {str(k): v for k, v in gold.to_dict(orient="index").items()},
-    "brent_oil": {str(k): v for k, v in brent.to_dict(orient="index").items()}
+    "gold": df_to_dict_with_dates(gold),
+    "brent_oil": df_to_dict_with_dates(brent)
 }
 
 ```
@@ -318,11 +340,26 @@ all_data = {
 import json
 today = date.today().strftime("%B %d, %Y")
 
+# Define the example as a regular string (not in the f-string)
+data_structure_info = """
+DATA STRUCTURE:
+Each dataset contains a 'dates' array and one or more data series. Example:
+{
+  "vix": {"dates": ["2024-01-01", ...], "VIX": [14.5, ...]},
+  "us_equities": {"dates": ["2024-01-01", ...], "SP500": [4800, ...], "NDX": [16500, ...]}
+}
+
+Date formats vary by dataset:
+- Daily: YYYY-MM-DD (e.g., "2024-01-15")
+- Monthly: YYYY-MM (e.g., "2024-01")
+- Quarterly: YYYYQQ (e.g., "2024Q1")
+"""
+
 
 # --- BUILD THE PROMPT ---
 # Use an f-string to inject both JSON strings into your prompt template.
 prompt = f"""
-First, provide a brief, up-to-date summary of the global financial markets covering the last three months up to today, {today}. When writing the summary, pay attention to indicators and trends that could suggest similarities to past U.S. market cycles. Focus on global equities, major stock indices, and global yields. When providing figures, prioritize the most recent month and year-to-date figures, if available. Limit the global summary to 3–5 sentences. The majority of the report should focus on the U.S. growth stock market.
+First, provide a brief, up-to-date summary of the global financial markets covering the last three months up to today, {today}. It can include MSCI, gold, petrol, or any other relevant items. When writing the summary, pay attention to indicators and trends that could suggest similarities to past U.S. market cycles. Focus on global equities, major stock indices, and global yields. When providing figures, prioritize the most recent month and year-to-date figures, if available. Limit the global summary to 3–6 sentences. Tone: Write as an experienced growth investor sharing insights with peers. Be direct and analytical, not promotional. Acknowledge uncertainty where it exists. Avoid phrases like "it's important to note" or "it should be noted that." The majority of the report should focus on the U.S. growth stock market.
 
 Then, adopting the persona of a US growth-stock investor, use that summary as context for a deeper analysis of the U.S. market. Base your analysis *only* on the data provided in the JSON object below. In your analysis, please:
 
@@ -330,22 +367,30 @@ Then, adopting the persona of a US growth-stock investor, use that summary as co
 - For each resemblance to past "boom and bust" periods, briefly explain why this similarity is relevant to current U.S. growth stocks. Where possible, quantify the similarity (e.g., "Current 2Y/10Y yield spread of X% is similar to Y% in 2000").
 - Provide at least 2 specific risks and 2 specific opportunities for U.S. growth investors, directly linking each to the patterns identified above.
 
-Data provided:
-- inflation: Inflation, YoY
-- unemployment: Unemployment rate
-- gdp: Gross Domestic Product, GDP, YoY
-- fed_assets: FED Balance Sheet (Assets)
-- household_debt: Household debt servicing
-- msci: MSCI World Equity Index. Monthly, but the last value represents the most recent day
-- us_equities: Major U.S. stock indices (SP500: SP500, NDX: Nasdaq 100, DJI: Dow Jones). Monthly, but the last value represents the most recent day
-- sp500_pe: SP 500 P/E ratio, Monthly, but the last value represents the most recent day
-- vix: VIX cboe volatility index
-- us_recessions: Past U.S. recessions, 1: there was a recession at the corresponding date
-- fed_target_rate: Federal Funds Target Range - Upper Limit, Percent, Daily. It tells what the upper limit is, and what was the change on a specific day.
-- us_yields: (DGS2: U.S. 2Y and DGS10: U.S. 10Y yields.
-- bofa_high_yield_option_adjusted_spread: The ICE BofA Option-Adjusted Spreads (OASs) are the calculated spreads between a computed OAS index of all bonds in a given rating category and a spot Treasury curve.
-- gold: historical gold prices
-- brent_pil: brent oil prices
+{data_structure_info}
+
+MACROECONOMIC:
+- inflation: CPI YoY %
+- unemployment: Unemployment rate %
+- gdp: GDP growth YoY %
+- fed_assets: Federal Reserve balance sheet total assets
+- household_debt: Household debt service payments as % of disposable income
+- us_recessions: Binary indicator (1 = recession period)
+
+EQUITY MARKETS (monthly data; final value = most recent day):
+- msci: MSCI World Index
+- us_equities: SP500, Nasdaq 100 (NDX), Dow Jones (DJI)
+- sp500_pe: S&P 500 trailing P/E ratio
+- vix: CBOE Volatility Index
+
+RATES & CREDIT:
+- fed_target_rate: Federal Funds upper limit %, daily (shows rate level and changes)
+- us_yields: 2-year (DGS2) and 10-year (DGS10) Treasury yields
+- bofa_high_yield_option_adjusted_spread: Spread between high-yield corporate bonds and Treasury curve (higher = more credit stress)
+
+COMMODITIES:
+- gold: Gold spot price (USD/oz)
+- brent_oil: Brent crude oil price (USD/barrel)
 
 
 {json.dumps(all_data, indent=2)}
@@ -385,10 +430,6 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 #| output: 'asis'
 #| cache: true
 
-today = date.today().strftime("%B %d, %Y")
-prompt = f"""
-First, provide a brief, up-to-date summary of the global financial markets covering the last three months up to today, {today}. When writing the summary, pay attention to indicators and trends that could suggest similarities to past U.S. market cycles. Focus on global equities, major stock indices, and global yields. When providing figures, prioritize the most recent month and year-to-date figures, if available. Limit the global summary to 3–5 sentences. The majority of the report should focus on the U.S. growth stock market."""
-
 import anthropic
 
 client = anthropic.Anthropic()
@@ -414,44 +455,44 @@ ai_response_claude = message.content[0].text
 #| output: 'asis'
 #| cache: true
 
-# from openai import OpenAI
+from openai import OpenAI
 
-# client = OpenAI()
+client = OpenAI()
 
-# # Reliable financial/economic domains
-# trusted_domains = [
-#     "reuters.com",
-#     "bloomberg.com",
-#     "ft.com",
-#     "wsj.com",
-#     "federalreserve.gov",
-#     "ecb.europa.eu",
-#     "bis.org",
-#     "imf.org",
-#     "worldbank.org",
-#     "oecd.org",
-#     "sec.gov",
-#     "spglobal.com",
-#     "msci.com",
-#     "morningstar.com",
-#     "nasdaq.com",
-#     "nyse.com"
-# ]
+# Reliable financial/economic domains
+trusted_domains = [
+    "reuters.com",
+    "bloomberg.com",
+    "ft.com",
+    "wsj.com",
+    "federalreserve.gov",
+    "ecb.europa.eu",
+    "bis.org",
+    "imf.org",
+    "worldbank.org",
+    "oecd.org",
+    "sec.gov",
+    "spglobal.com",
+    "msci.com",
+    "morningstar.com",
+    "nasdaq.com",
+    "nyse.com"
+]
 
-# response = client.responses.create(
-#     model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
-#     tools=[{
-#             "type": "web_search",
-#             "filters": {
-#               "allowed_domains": trusted_domains
-#             }
-#           }],
-#     input=[
-#         {"role": "user", "content": prompt}
-#     ],
-# )
+response = client.responses.create(
+    model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
+    tools=[{
+            "type": "web_search",
+            "filters": {
+              "allowed_domains": trusted_domains
+            }
+          }],
+    input=[
+        {"role": "user", "content": prompt}
+    ],
+)
 
-# ai_response_gbt5 = response.output_text
+ai_response_gbt5 = response.output_text
 
 ```
 
@@ -1359,7 +1400,7 @@ CHART_FILENAME_LIBRARY = {
 import re
 
 
-# The text from the Gemini API
+# The text from the Claude API
 ai_response_text = ai_response_claude
 
 segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
@@ -1388,32 +1429,32 @@ for segment in segments:
 #| echo: false
 #| output: 'asis'
 
-### AUTOMATION OF CHART PLACEMENT
+## AUTOMATION OF CHART PLACEMENT
 
-# import re
+import re
 
 
-# # The text from the Gemini API
-# ai_response_text = ai_response_gbt5
+# The text from the openai API
+ai_response_text = ai_response_gbt5
 
-# segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
+segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
 
-# for segment in segments:
-#     if segment.startswith('[CHART:'):
-#         chart_description = segment[7:-1].strip()
+for segment in segments:
+    if segment.startswith('[CHART:'):
+        chart_description = segment[7:-1].strip()
         
-#         # Look up the filename in your new library
-#         chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
+        # Look up the filename in your new library
+        chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
         
-#         if chart_filename:
-#             # Print the markdown image tag using the found filename
-#             print(f"\n![{chart_description}]({chart_filename})\n")
-#         else:
-#             print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
+        if chart_filename:
+            # Print the markdown image tag using the found filename
+            print(f"\n![{chart_description}]({chart_filename})\n")
+        else:
+            print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
             
-#     else:
-#         # This is a normal text segment, so just print it
-#         print(segment, end="")
+    else:
+        # This is a normal text segment, so just print it
+        print(segment, end="")
 ```
 
 
