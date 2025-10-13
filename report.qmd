@@ -190,9 +190,10 @@ pe.index = pe.index.to_period('M')  # Convert to monthly period index
 # Measures: Expected 30-day volatility of S&P 500 (fear gauge)
 # Higher VIX = higher expected volatility = higher market uncertainty
 vix = yf.download("^VIX", start="1900-01-01", interval="1d", auto_adjust=True)['Close']
+vix.rename(columns= {"^VIX":"VIX"}, inplace=True)
+last_vix_value = vix.iloc[-1]['VIX'] # this is to be used in the graph
 vix = vix.resample('M').mean()  # Average daily VIX values for each month
 vix.index = vix.index.to_period('M')
-vix.rename(columns= {"^VIX":"VIX"}, inplace=True)
 vix = vix.round(4)
 
 
@@ -282,6 +283,7 @@ brent = brent.round(4)
 
 
 ```{python}
+#| echo: false
 # ============================================================================
 # DATA AGGREGATION FOR AI ANALYSIS
 # ============================================================================
@@ -805,7 +807,7 @@ ax.yaxis.set_label_position("right")
 ax.yaxis.tick_right()
 
 # show y-axis values as %s
-ax.yaxis.set_major_formatter(PercentFormatter(xmax=1.0, decimals=0))
+ax.yaxis.set_major_formatter(PercentFormatter(xmax=100.0, decimals=0))
 
 # setting the last x-axis value to MTD
 # This runs AFTER the date formatting to override the last label
@@ -889,8 +891,40 @@ plt.savefig(
 #| include: false
 
 # UNEMPLOYMENT
+plot_data = unemployment.tail(13)
+ax = plot_data.plot(kind='bar', legend=True)
 
-ax = unemployment.plot(color='#0612f2')
+# -------  Add data labels on top of bars ---
+for container in ax.containers:
+    ax.bar_label(container, padding=3) # , fmt='%.1f%%'
+# -------------------------------------------
+
+# --- NEW: Format x-axis labels to show Month and Year ---
+# Get the PeriodIndex from your dataframe
+periods = plot_data.index
+new_labels_text = []
+prev_year = None
+
+# Loop through each period to create the custom label
+for period in periods:
+    current_month_name = period.strftime('%b') # e.g., 'Oct'
+    current_year = period.year
+
+    # If it's the first item or the year has changed, show "Month\nYear"
+    if prev_year is None or current_year != prev_year:
+        new_labels_text.append(f"{current_month_name}\n{current_year}")
+    # Otherwise, just show "Month"
+    else:
+        new_labels_text.append(current_month_name)
+    
+    prev_year = current_year
+
+# Apply the newly created labels to the x-axis
+ax.set_xticklabels(new_labels_text, rotation=0, ha='center')
+# -----------------------------------------------------------
+
+# Set titles and labels
+# (You can add your titles and labels here if you have them)
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -899,18 +933,30 @@ ax.set_facecolor('#f5f5f5')  # Set plot background color
 fig = ax.get_figure()
 fig.patch.set_facecolor("#f5f5f5")  # figure background
 
-ax.yaxis.tick_right()
 ax.yaxis.set_label_position("right")
-ax.yaxis.set_major_formatter(PercentFormatter(xmax=100))  # if values like 2.4 = 2.4%
-ax.yaxis.set_major_locator(MultipleLocator(1))            # 1% steps
-# ax.set_ylim(1, 5)  # adjust to your data range
+ax.yaxis.tick_right()
 
-# Add gridlines
-ax.grid(which='major', linestyle='--', linewidth=0.7)
+# show y-axis values as %s
+ax.yaxis.set_major_formatter(PercentFormatter(xmax=100.0, decimals=0))
+
+ax.set_ylim(1,5)
+# setting the last x-axis value to MTD
+# This runs AFTER the date formatting to override the last label
+labels = ax.get_xticklabels()
+new_labels_final = [label.get_text() for label in labels]
+
+ax.set_xticklabels(new_labels_final)
+
 
 # --- Remove top/right spines ---
 for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
+
+# Add a horizontal line at y=0 for reference
+ax.axhline(0, color='grey', linewidth=0.8, linestyle='--')
+
+plt.xlabel(None) # Remove the default x-axis label
+plt.tight_layout() # Adjust layout
 
 plt.savefig(
     'charts/US Unemployment Rate.png', # Filename and extension
@@ -935,6 +981,11 @@ plt.savefig(
 plot_data = gdp.tail(12)  # This will now show last 12 quarters
 
 ax = plot_data.plot(kind='bar', legend=True)
+
+# -------  Add data labels on top of bars ---
+for container in ax.containers:
+    ax.bar_label(container, padding=3) # , fmt='%.1f%%'
+# -------------------------------------------
 
 # --- Format x-axis labels to show Quarter and Year ---
 # Get the PeriodIndex from your dataframe
@@ -1018,8 +1069,23 @@ plt.show() # Display the plot
 #| include: false
 
 # Federal Reserve Total Assets
-
 ax = fed_assets.plot(color='#0612f2')
+
+# --- NEW: Highlight the last data point ---
+last_date = fed_assets.index[-1]
+last_value = fed_assets.iloc[-1].values[0]  # Get the actual value
+
+# Add a marker at the last point
+# ax.plot(last_date, last_value, 'o', color='#0612f2', markersize=8, zorder=5)
+
+# Add a horizontal line from the last point to the y-axis
+# ax.axhline(last_value, color='#0612f2', linewidth=1, linestyle='--', alpha=0.5)
+
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value/1e6:.1f}T', 
+        va='center', ha='left', color='#0612f2', fontweight='bold') 
+        # ,bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#0612f2', linewidth=1.0) 
+# -----------------------------------------------
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -1059,6 +1125,15 @@ plt.savefig(
 # Household Debt Service Payments
 
 ax = hdebt.plot(color='#0612f2')
+
+# --- NEW: Highlight the last data point ---
+last_date = hdebt.index[-1]
+last_value = hdebt.iloc[-1].values[0]  # Get the actual value
+
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.1f}%', 
+        va='center', ha='left', color='#0612f2', fontweight='bold') 
+# -----------------------------------------------
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -1106,6 +1181,15 @@ plt.savefig(
 
 ax = pe.plot(color='#0612f2')
 
+# --- NEW: Highlight the last data point ---
+last_date = pe.index[-1]
+last_value = pe.iloc[-1].values[0]  # Get the actual value
+
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.1f}', 
+        va='center', ha='left', color='#0612f2', fontweight='bold') 
+# -----------------------------------------------
+
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
 
@@ -1140,8 +1224,22 @@ plt.savefig(
 #| include: false
 
 # Cboe Volatility Index (VIX)
+# --- NEW: Replace last month's average with last actual value ---
+
+# Replace the last value with the actual last value instead of monthly average
+vix.values[-1] = last_vix_value
+# ---------------------------------------------------------------
 
 ax = vix.plot(color='#0612f2')
+
+# --- NEW: Highlight the last data point ---
+last_date = vix.index[-1]
+last_value = vix.iloc[-1].values[0]  # Get the actual value
+
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.1f}', 
+        va='center', ha='left', color='#0612f2', fontweight='bold') 
+# -----------------------------------------------
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
