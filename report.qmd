@@ -194,6 +194,8 @@ vix.rename(columns= {"^VIX":"VIX"}, inplace=True)
 last_vix_value = vix.iloc[-1]['VIX'] # this is to be used in the graph
 vix = vix.resample('M').mean()  # Average daily VIX values for each month
 vix.index = vix.index.to_period('M')
+# Replace the last value with the actual last value instead of monthly average
+vix.values[-1] = last_vix_value
 vix = vix.round(4)
 
 
@@ -531,13 +533,26 @@ ai_response_gemini25 = response.text
 
 ```{python}
 #| echo: false
-#| fig-align: center
 #| include: false
 
 # MSCI World Equity Index
 
 # 1. Create the plot AND capture the Axes object in the 'ax' variable
-ax = msci.plot(color='#0612f2')
+ax = msci.plot(xlabel='') # color='#0072AA', 
+
+ax.legend(title='') # remove the additional name Ticker in legend
+
+ax.legend(['MSCI World'])
+
+# ----------- Highlight the last data point ---
+last_date = msci.index[-1]
+last_value = msci.iloc[-1].values[0]  # Get the actual value
+
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.1f}', 
+        va='center', ha='left', color='#0072AA', fontweight='bold') 
+        # ,bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='#0612f2', linewidth=1.0) 
+# -----------------------------------------------
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -572,7 +587,6 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
 #| include: false
 
 # Assuming 'stock_data' is your initial DataFrame with a DatetimeIndex
@@ -582,6 +596,8 @@ del stock_returns['DJI']
 stock_returns.index = stock_returns.index.to_period('M')
 
 ax = stock_returns.plot(kind='bar', legend=True)
+
+ax.legend(title='') # remove the additional name Ticker in legend
 
 # --- NEW: Format x-axis labels to show Month and Year ---
 # Get the PeriodIndex from your dataframe
@@ -654,93 +670,76 @@ plt.show() # Display the plot
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
-
-# --- 1. SETUP: Create Sample Data ---
-# This sample data matches the structure of your FRED data.
-# Replace this section with your actual 'usYields' DataFrame.
 
 # --- 2. Filter the Data (like in ggplot) ---
 plot_data = usYields[usYields.index >= "2020-01-01"]
 plot_data["SR-LR"] = plot_data["DGS2"] - plot_data["DGS10"]
 
-# --- 3. Create and Customize the Plot ---
+# Your existing plot
+ax = plot_data.plot(color=['#ff7f0e', '#1f77b4', '#D3D3D3'], linewidth=0.75, xlabel='') # #A4D0A0, #78ADD2
 
-# Create a figure and an axes object
-fig, ax = plt.subplots()
-fig.set_facecolor('#f5f5f5') # Set figure background color
+# Add a dashed horizontal line at y=0 (or whatever value you want)
+ax.axhline(y=0, color='#D3D3D3', linestyle='--', linewidth=1.0) # , alpha=0.7
+
+ax.legend(['2-Year', '10-Year', '10Y-2Y'])
+
+# setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
 
-# Define the exact colors from your ggplot code
-colors = {
-    "2Y Yield": "#bee0ff", 
-    "10Y Yield": "#0612f2",  
-    "SR-LR": "#D3D3D3"
-}
+# To access the figure:
+fig = ax.get_figure()
+fig.patch.set_facecolor("#f5f5f5")  # figure background
 
-# Plot each line with specific colors, labels, and line widths
-ax.plot(plot_data.index, plot_data['DGS2'], color=colors["2Y Yield"], linewidth=1, label='2Y Yield')
-ax.plot(plot_data.index, plot_data['DGS10'], color=colors["10Y Yield"], linewidth=1, label='10Y Yield')
-ax.plot(plot_data.index, plot_data['SR-LR'], color=colors["SR-LR"], linewidth=1, label='SR-LR')
 
-# Add the horizontal dashed line at y=0
-ax.axhline(y=0, color='#D3D3D3', linestyle='--', linewidth=1.0)
+# # 1. Set the location of minor ticks to be every 6 months
+# ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=7))
 
-# --- 4. FORMAT THE PLOT to match the theme ---
-# --- ADDITIONS FOR MID-YEAR GRIDLINES ---
-# 1. Set the location of minor ticks to be every 6 months
-ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=7))
-
-# 2. Turn on the grid for the minor ticks and style them
+# # 2. Turn on the grid for the minor ticks and style them
 ax.grid(True, which='minor', axis='x', linestyle='dotted', color='grey', linewidth=0.2)
-# --- END ADDITIONS ---
 
-# Customize the grid to be dotted
+# # Customize the grid to be dotted
 ax.grid(True, which='major', axis='y', linestyle='dotted', color='grey', linewidth=0.2)
 ax.grid(True, which='major', axis='x', linestyle='dotted', color='grey', linewidth=0.2)
 
-# Move the Y-axis to the right side and format as percentage
+# # Move the Y-axis to the right side and format as percentage
 ax.yaxis.tick_right()
 ax.yaxis.set_label_position("right")
 ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=100.0, decimals=1))
-ax.set_ylim(-2, 6)
+# ax.set_ylim(-2, 6)
 
-# Format the X-axis to show years
-ax.xaxis.set_major_locator(mdates.YearLocator())
-ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-ax.tick_params(axis='x', labelsize=8)
-ax.tick_params(axis='y', labelsize=8)
+# # Format the X-axis to show years
+# ax.xaxis.set_major_locator(mdates.YearLocator())
+# ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+# ax.tick_params(axis='x', labelsize=8)
+# ax.tick_params(axis='y', labelsize=8)
 
-# --- ADD THIS LINE TO STYLE THE X-AXIS AND Y-AXIS TICKS ---
-ax.tick_params(axis='x', which='major', direction='in', color='black', length=6, labelsize=8)
-ax.tick_params(axis='y', which='major', direction='in', color='black', length=6, labelsize=8)
+# # --- ADD THIS LINE TO STYLE THE X-AXIS AND Y-AXIS TICKS ---
+# ax.tick_params(axis='x', which='major', direction='in', color='black', length=6, labelsize=8)
+# ax.tick_params(axis='y', which='major', direction='in', color='black', length=6, labelsize=8)
 
-# Remove the plot frame lines (spines)
-ax.spines[['top', 'left', 'bottom']].set_visible(False)
+# # Remove the plot frame lines (spines)
+ax.spines[['top', 'left']].set_visible(False)
 
-ax.spines['right'].set_visible(True)
-ax.spines['right'].set_color('black')
-ax.spines['right'].set_linewidth(0.75)
+# ax.spines['right'].set_visible(True)
+# ax.spines['right'].set_color('black')
+# ax.spines['right'].set_linewidth(0.75)
 
-# Add titles and caption, positioned to match ggplot's style
-# plt.rcParams['font.family'] = 'Inter' # Set font family if available
-# fig.suptitle('Short vs long rates', x=0.09, y=0.98, ha='left', fontsize=16, fontweight='bold')
-# ax.set_title('10Y yield little changed from Mar level', loc='left', fontsize=12, pad=10)
-fig.text(0.01, 0.04, 'Data source: FRED', ha='left', fontsize=7, fontweight='bold')
+# # Add titles and caption, positioned to match ggplot's style
+# # plt.rcParams['font.family'] = 'Inter' # Set font family if available
+# # fig.suptitle('Short vs long rates', x=0.09, y=0.98, ha='left', fontsize=16, fontweight='bold')
+# # ax.set_title('10Y yield little changed from Mar level', loc='left', fontsize=12, pad=10)
+fig.text(0.01, 0.00, 'Data source: FRED', ha='left', fontsize=7, fontweight='bold')
 
-# Customize the legend to match ggplot's style
-ax.legend(loc='upper left', frameon=False, ncol=3)
+# # Customize the legend to match ggplot's style
+# ax.legend(loc='upper left', frameon=False, ncol=3)
 
-# --- MODIFIED LEGEND CODE ---
-# Add columnspacing=1.0 to reduce the space between legend items
-ax.legend(loc='upper left', frameon=False, ncol=3, columnspacing=0.8)
-# -----------------------------
+# # --- MODIFIED LEGEND CODE ---
+# # Add columnspacing=1.0 to reduce the space between legend items
+# ax.legend(loc='upper left', frameon=False, ncol=3, columnspacing=0.8)
+# # -----------------------------
 
-fig.subplots_adjust(left=0.08, right=0.92, top=0.9, bottom=0.2)
+# fig.subplots_adjust(left=0.08, right=0.92, top=0.9, bottom=0.2)
 
 plt.savefig(
     'charts/US 2Y and 10Y Treasury Yields and Spread.png', # Filename and extension
@@ -749,27 +748,22 @@ plt.savefig(
 )
 # plt.show()
 
-# To save the figure with the exact dimensions
-# fig.savefig('my_700x350_plot.png', dpi=dpi) # 
+# To save the figure with the exact dimensions 
 ```
 
 
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # INFLATION
 
 plot_data = inflation.tail(13)
 del plot_data['core_cpi'] 
-ax = plot_data.plot(kind='bar', legend=True)
+ax = plot_data.plot(kind='bar')
 
-# --- NEW: Format x-axis labels to show Month and Year ---
+# --- Format x-axis labels to show Month and Year ---
 # Get the PeriodIndex from your dataframe
 periods = plot_data.index
 new_labels_text = []
@@ -839,17 +833,15 @@ plt.show() # Display the plot
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # Inflation, cpi and core_cpi
 
 plot_data = inflation[inflation.index >= "2020-01-01"]
 
-ax = plot_data.plot() # color='#0612f2'
+ax = plot_data.plot(xlabel='') # color='#0612f2'
+
+ax.legend(['CPI', 'Core CPI'])
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -884,15 +876,13 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # UNEMPLOYMENT
 plot_data = unemployment.tail(13)
 ax = plot_data.plot(kind='bar', legend=True)
+
+ax.legend(['Unemployment'])
 
 # -------  Add data labels on top of bars ---
 for container in ax.containers:
@@ -971,16 +961,14 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # GDP
 plot_data = gdp.tail(12)  # This will now show last 12 quarters
 
 ax = plot_data.plot(kind='bar', legend=True)
+
+ax.legend(['GDP'])
 
 # -------  Add data labels on top of bars ---
 for container in ax.containers:
@@ -1062,14 +1050,12 @@ plt.show() # Display the plot
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # Federal Reserve Total Assets
-ax = fed_assets.plot(color='#0612f2')
+ax = fed_assets.plot(xlabel='')
+
+ax.legend(['Fed Total Assets'])
 
 # --- NEW: Highlight the last data point ---
 last_date = fed_assets.index[-1]
@@ -1116,15 +1102,13 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # Household Debt Service Payments
 
-ax = hdebt.plot(color='#0612f2')
+ax = hdebt.plot(xlabel='')
+
+ax.legend(['Household Debt Service Ratio'])
 
 # --- NEW: Highlight the last data point ---
 last_date = hdebt.index[-1]
@@ -1171,15 +1155,13 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # S&P 500 P/E Ratio
 
-ax = pe.plot(color='#0612f2')
+ax = pe.plot(xlabel='')
+
+ax.legend(['S&P 500 P/E'])
 
 # --- NEW: Highlight the last data point ---
 last_date = pe.index[-1]
@@ -1217,20 +1199,13 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # Cboe Volatility Index (VIX)
-# --- NEW: Replace last month's average with last actual value ---
+ax = vix.plot(xlabel='')
 
-# Replace the last value with the actual last value instead of monthly average
-vix.values[-1] = last_vix_value
-# ---------------------------------------------------------------
-
-ax = vix.plot(color='#0612f2')
+ax.legend(title='') # remove the additional name Ticker in legend
+ax.legend(['VIX'])
 
 # --- NEW: Highlight the last data point ---
 last_date = vix.index[-1]
@@ -1239,6 +1214,13 @@ last_value = vix.iloc[-1].values[0]  # Get the actual value
 # Add text label on the y-axis
 ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.1f}', 
         va='center', ha='left', color='#0612f2', fontweight='bold') 
+
+# ax.annotate(f'Current: {last_value:.1f}', 
+#             xy=(last_date, last_value),
+#             xytext=(10, 5), 
+#             textcoords='offset points',
+#             fontsize=9,
+#             bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
 # -----------------------------------------------
 
 # setting figure background and plot background color
@@ -1268,15 +1250,13 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # Federal Funds Target Rate (Upper Limit)
 
-ax = fedTargetRate.plot() # color='#0612f2'
+ax = fedTargetRate.plot(xlabel='') # color='#0612f2'
+
+ax.legend(['Fed Funds (Upper)', 'Change'])
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -1314,15 +1294,13 @@ plt.savefig(
 
 ```{python}
 #| echo: false
-#| fig-align: center
-#| fig-width: 7
-#| fig-height: 3.5
-#| fig-dpi: 100
 #| include: false
 
 # US Recession Indicator
 
-ax = recessions.plot(color='#0612f2')
+ax = recessions.plot(xlabel='')
+
+ax.legend(["Recessions"], loc='upper right')
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -1360,7 +1338,9 @@ plt.savefig(
 #| include: false
 
 # ICE BofA Option-Adjusted Spreads
-ax = option_adjusted_spread.plot(color='#0612f2')
+ax = option_adjusted_spread.plot(xlabel='')
+
+ax.legend(["ICE BofA OAS"])
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -1397,7 +1377,10 @@ plt.savefig(
 #| include: false
 
 # Gold Prices
-ax = gold.plot(color='#0612f2')
+ax = gold.plot(xlabel='')
+
+ax.legend(["Gold"], title='') # remove the additional name Ticker in legend
+
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -1434,7 +1417,9 @@ plt.savefig(
 #| include: false
 
 # Brent Oil Prices
-ax = brent.plot(color='#0612f2')
+ax = brent.plot(xlabel='')
+
+ax.legend(["Brent"], title='') # remove the additional name Ticker in legend
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -1451,7 +1436,7 @@ for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
 plt.savefig(
-    'charts/Gold Prices.png', # Filename and extension
+    'charts/Brent Oil Prices.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
     bbox_inches='tight'  # Trims extra whitespace
 )
@@ -1586,103 +1571,5 @@ for segment in segments:
     else:
         # This is a normal text segment, so just print it
         print(segment, end="")
-```
-
-
-```{python}
-#| echo: false
-#| output: 'asis'
-#| cache: true
-
-# import datetime
-
-# # --- 1. Generate the dynamic date string ---
-# today = datetime.date.today()
-# day = today.day
-
-# if 1 <= day <= 10:
-#     part_of_month = "early"
-# elif 11 <= day <= 20:
-#     part_of_month = "mid"
-# else:
-#     part_of_month = "late"
-
-# # Format the final string (e.g., "late September 2025")
-# date_string = f"as of {part_of_month} {today.strftime('%B %Y')}"
-
-
-# # --- 2. Build your prompt using the dynamic date ---
-# prompt = f"""
-# Using your web search capabilities, identify 10 US growth stocks that are currently trending in financial news and analyst reports {date_string}.
-
-# For each stock, provide:
-# 1. The company name and ticker symbol.
-# 2. A brief, one-sentence summary of why it is considered a trending growth stock.
-# 3. Please cite your sources.
-
-# Use only one title "Trending Stocks".
-
-# Present all results in a markdown table with columns: Company Name, Ticker Symbol, Summary. Include a header row. Do not use any other format such as plain lists or paragraphs.
-# Use bold for company names, plain text for ticker symbols, and concise sentences for the summary. Keep the summary column clear and readable.
-
-# """
-
-# # Now the 'prompt' variable is ready to be sent to the Gemini API
-# #print(prompt) # Uncomment to see the final prompt
-
-# from google import genai
-# from google.genai import types
-
-# # The client gets the API key from the environment variable `GEMINI_API_KEY`.
-# client = genai.Client()
-
-# grounding_tool = types.Tool(
-#     google_search=types.GoogleSearch()
-# )
-
-# config = types.GenerateContentConfig(
-#     tools=[grounding_tool]
-# )
-
-# response = client.models.generate_content(
-#     model="gemini-2.5-pro", 
-#     contents=prompt,
-#     config=config,
-# )
-# print(response.text)
-
-```
-
-
-```{python}
-#| echo: false
-#| output: 'asis'
-#| cache: true
-#| 
-# from google import genai
-# from google.genai import types
-
-# # The client gets the API key from the environment variable `GEMINI_API_KEY`.
-# client = genai.Client()
-
-# grounding_tool = types.Tool(
-#     google_search=types.GoogleSearch()
-# )
-
-# config = types.GenerateContentConfig(
-#     tools=[grounding_tool]
-# )
-
-# response = client.models.generate_content(
-#     model="gemini-2.5-pro", 
-#     contents=f"""
-#     1. Make a summary of the latest inflation report from BLS. Also make a commentary of what the current inflation reading may mean for a growth-stock investor.
-#     2.  Make a summary of the latest GDP report from BAE. Also make a commentary of what the current inflation reading may mean for a growth-stock investor.
-
-#     Do not start like this e.g., Washington D.C. - ... start with text directly.
-#     """,
-#     config=config,
-# )
-# print(response.text)
 ```
 
