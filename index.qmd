@@ -2,6 +2,5 @@
 title: "market-research"
 ---
 
-This is a Quarto website.
+AI-driven research reports.
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.

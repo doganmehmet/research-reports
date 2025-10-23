@@ -429,107 +429,6 @@ Finally, based on your complete analysis, conclude with a suggested portfolio ex
 ```
 
 
-```{python}
-#| echo: false
-#| output: 'asis'
-#| cache: true
-
-import anthropic
-
-client = anthropic.Anthropic()
-
-message = client.messages.create(
-    model="claude-sonnet-4-5-20250929",
-    max_tokens=8192,
-    messages=[
-        {
-            "role": "user",
-            "content": prompt
-        }
-    ]
-)
-# ai_response_claude = message.content
-ai_response_claude = message.content[0].text
-```
-
-
-
-```{python}
-#| echo: false
-#| output: 'asis'
-#| cache: true
-
-from openai import OpenAI
-
-client = OpenAI()
-
-# Reliable financial/economic domains
-trusted_domains = [
-    "reuters.com",
-    "bloomberg.com",
-    "ft.com",
-    "wsj.com",
-    "federalreserve.gov",
-    "ecb.europa.eu",
-    "bis.org",
-    "imf.org",
-    "worldbank.org",
-    "oecd.org",
-    "sec.gov",
-    "spglobal.com",
-    "msci.com",
-    "morningstar.com",
-    "nasdaq.com",
-    "nyse.com"
-]
-
-response = client.responses.create(
-    model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
-    tools=[{
-            "type": "web_search",
-            "filters": {
-              "allowed_domains": trusted_domains
-            }
-          }],
-    input=[
-        {"role": "user", "content": prompt}
-    ],
-)
-
-ai_response_gbt5 = response.output_text
-
-```
-
-
-
-```{python}
-#| echo: false
-#| output: 'asis'
-#| cache: true
-#| 
-from google import genai
-from google.genai import types
-
-# The client gets the API key from the environment variable `GEMINI_API_KEY`.
-client = genai.Client()
-
-grounding_tool = types.Tool(
-    google_search=types.GoogleSearch()
-)
-
-config = types.GenerateContentConfig(
-    tools=[grounding_tool]
-)
-
-response = client.models.generate_content(
-    model="gemini-2.5-pro", 
-    contents=prompt,
-    config=config,
-)
-ai_response_gemini25 = response.text
-```
-
-
 
 ```{python}
 #| echo: false
@@ -682,7 +581,7 @@ ax = plot_data.plot(color=['#ff7f0e', '#1f77b4', '#D3D3D3'], linewidth=0.75, xla
 # Add a dashed horizontal line at y=0 (or whatever value you want)
 ax.axhline(y=0, color='#D3D3D3', linestyle='--', linewidth=1.0) # , alpha=0.7
 
-ax.legend(['2-Year', '10-Year', '10Y-2Y'])
+ax.legend(['2-Year', '10-Year', '2Y-10Y'])
 
 # setting figure background and plot background color
 ax.set_facecolor('#f5f5f5')  # Set plot background color
@@ -729,7 +628,7 @@ ax.spines[['top', 'left']].set_visible(False)
 # # plt.rcParams['font.family'] = 'Inter' # Set font family if available
 # # fig.suptitle('Short vs long rates', x=0.09, y=0.98, ha='left', fontsize=16, fontweight='bold')
 # # ax.set_title('10Y yield little changed from Mar level', loc='left', fontsize=12, pad=10)
-fig.text(0.01, 0.00, 'Data source: FRED', ha='left', fontsize=7, fontweight='bold')
+# fig.text(0.01, 0.00, 'Data source: FRED', ha='left', fontsize=7, fontweight='bold')
 
 # # Customize the legend to match ggplot's style
 # ax.legend(loc='upper left', frameon=False, ncol=3)
@@ -763,11 +662,18 @@ plot_data = inflation.tail(13)
 del plot_data['core_cpi'] 
 ax = plot_data.plot(kind='bar')
 
+ax.legend(['Inflation'])
+
 # --- Format x-axis labels to show Month and Year ---
 # Get the PeriodIndex from your dataframe
 periods = plot_data.index
 new_labels_text = []
 prev_year = None
+
+# -------  Add data labels on top of bars ---
+for container in ax.containers:
+    ax.bar_label(container, padding=3) # , fmt='%.1f%%'
+# -------------------------------------------
 
 # Loop through each period to create the custom label
 for period in periods:
@@ -800,10 +706,12 @@ fig.patch.set_facecolor("#f5f5f5")  # figure background
 ax.yaxis.set_label_position("right")
 ax.yaxis.tick_right()
 
+ax.set_ylim(0,4)
+ax.set_yticks([0, 1, 2, 3, 4])  # Explicitly define tick positions
+
 # show y-axis values as %s
 ax.yaxis.set_major_formatter(PercentFormatter(xmax=100.0, decimals=0))
 
-# setting the last x-axis value to MTD
 # This runs AFTER the date formatting to override the last label
 labels = ax.get_xticklabels()
 new_labels_final = [label.get_text() for label in labels]
@@ -929,7 +837,7 @@ ax.yaxis.tick_right()
 # show y-axis values as %s
 ax.yaxis.set_major_formatter(PercentFormatter(xmax=100.0, decimals=0))
 
-ax.set_ylim(1,5)
+ax.set_ylim(1,6)
 # setting the last x-axis value to MTD
 # This runs AFTER the date formatting to override the last label
 labels = ax.get_xticklabels()
@@ -1281,6 +1189,14 @@ ax.yaxis.set_major_formatter(PercentFormatter(xmax=100))  # if values like 2.4 =
 for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
+# --- NEW: Highlight the last data point ---
+# last_date = fedTargetRate.index[-1]
+# last_value = fedTargetRate.iloc[-1].values[0]  # Get the actual value
+
+# Add text label on the y-axis
+# ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.2f}%', 
+#         va='center', ha='left', color='#0612f2', fontweight='bold') 
+
 plt.savefig(
     'charts/Federal Funds Target Rate (Upper Limit).png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
@@ -1362,6 +1278,16 @@ ax.yaxis.set_label_position("right")
 for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
 
+
+# --- NEW: Highlight the last data point ---
+last_date = option_adjusted_spread.index[-1]
+last_value = option_adjusted_spread.iloc[-1].values[0]  # Get the actual value
+
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.1f}', 
+        va='center', ha='left', color='#0612f2', fontweight='bold') 
+
+
 plt.savefig(
     'charts/ICE BofA Option-Adjusted Spreads.png', # Filename and extension
     dpi=300,             # Dots per inch for high resolution
@@ -1389,11 +1315,13 @@ ax.set_facecolor('#f5f5f5')  # Set plot background color
 fig = ax.get_figure()
 fig.patch.set_facecolor("#f5f5f5")  # figure background
 
-# # Get the container from the existing plot
-# bar_container = ax.containers[0]
+# --- NEW: Highlight the last data point ---
+last_date = gold.index[-1]
+last_value = gold.iloc[-1].values[0]  # Get the actual value
 
-# # Add bar labels
-# ax.bar_label(bar_container)
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.0f}', 
+        va='center', ha='left', color='#0612f2', fontweight='bold') 
 
 ax.yaxis.tick_right()
 ax.yaxis.set_label_position("right")
@@ -1401,6 +1329,8 @@ ax.yaxis.set_label_position("right")
 # --- Remove top/right spines ---
 for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
+
+
 
 plt.savefig(
     'charts/Gold Prices.png', # Filename and extension
@@ -1434,6 +1364,15 @@ ax.yaxis.set_label_position("right")
 # --- Remove top/right spines ---
 for spine in ["top", "left"]:
     ax.spines[spine].set_visible(False)
+
+
+# --- NEW: Highlight the last data point ---
+last_date = brent.index[-1]
+last_value = brent.iloc[-1].values[0]  # Get the actual value
+
+# Add text label on the y-axis
+ax.text(ax.get_xlim()[1], last_value, f'  {last_value:.0f}', 
+        va='center', ha='left', color='#0612f2', fontweight='bold') 
 
 plt.savefig(
     'charts/Brent Oil Prices.png', # Filename and extension
@@ -1473,7 +1412,31 @@ CHART_FILENAME_LIBRARY = {
 
 ```
 
-# CLAUDE SONNET 4.5
+
+```{python}
+#| echo: false
+#| output: 'asis'
+#| cache: true
+
+import anthropic
+
+client = anthropic.Anthropic()
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=8192,
+    messages=[
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+)
+# ai_response_claude = message.content
+ai_response = message.content[0].text
+```
+
+
 ```{python}
 #| echo: false
 #| output: 'asis'
@@ -1481,10 +1444,9 @@ CHART_FILENAME_LIBRARY = {
 ## AUTOMATION OF CHART PLACEMENT
 
 import re
-
 
 # The text from the Claude API
-ai_response_text = ai_response_claude
+ai_response_text = ai_response
 
 segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
 
@@ -1507,69 +1469,78 @@ for segment in segments:
 ```
 
 
-# OPEANAI GBT-5
+
 ```{python}
 #| echo: false
 #| output: 'asis'
+#| cache: true
 
-## AUTOMATION OF CHART PLACEMENT
+# from openai import OpenAI
 
-import re
+# client = OpenAI()
 
+# # Reliable financial/economic domains
+# trusted_domains = [
+#     "reuters.com",
+#     "bloomberg.com",
+#     "ft.com",
+#     "wsj.com",
+#     "federalreserve.gov",
+#     "ecb.europa.eu",
+#     "bis.org",
+#     "imf.org",
+#     "worldbank.org",
+#     "oecd.org",
+#     "sec.gov",
+#     "spglobal.com",
+#     "msci.com",
+#     "morningstar.com",
+#     "nasdaq.com",
+#     "nyse.com"
+# ]
 
-# The text from the openai API
-ai_response_text = ai_response_gbt5
+# response = client.responses.create(
+#     model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
+#     tools=[{
+#             "type": "web_search",
+#             "filters": {
+#               "allowed_domains": trusted_domains
+#             }
+#           }],
+#     input=[
+#         {"role": "user", "content": prompt}
+#     ],
+# )
 
-segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
+# ai_response_gbt5 = response.output_text
 
-for segment in segments:
-    if segment.startswith('[CHART:'):
-        chart_description = segment[7:-1].strip()
-        
-        # Look up the filename in your new library
-        chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
-        
-        if chart_filename:
-            # Print the markdown image tag using the found filename
-            print(f"\n![{chart_description}]({chart_filename})\n")
-        else:
-            print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
-            
-    else:
-        # This is a normal text segment, so just print it
-        print(segment, end="")
 ```
 
 
-# GEMINI 2.5-Pro
+
 ```{python}
 #| echo: false
 #| output: 'asis'
+#| cache: true
+#| 
+# from google import genai
+# from google.genai import types
 
-### AUTOMATION OF CHART PLACEMENT
+# # The client gets the API key from the environment variable `GEMINI_API_KEY`.
+# client = genai.Client()
 
-import re
+# grounding_tool = types.Tool(
+#     google_search=types.GoogleSearch()
+# )
 
-# The text from the Gemini API
-ai_response_text = ai_response_gemini25
+# config = types.GenerateContentConfig(
+#     tools=[grounding_tool]
+# )
 
-segments = re.split(r'(\[CHART:.*?\])', ai_response_text)
-
-for segment in segments:
-    if segment.startswith('[CHART:'):
-        chart_description = segment[7:-1].strip()
-        
-        # Look up the filename in your new library
-        chart_filename = CHART_FILENAME_LIBRARY.get(chart_description)
-        
-        if chart_filename:
-            # Print the markdown image tag using the found filename
-            print(f"\n![{chart_description}]({chart_filename})\n")
-        else:
-            print(f"\n_Warning: Chart '{chart_description}' not found in library._\n")
-            
-    else:
-        # This is a normal text segment, so just print it
-        print(segment, end="")
+# response = client.models.generate_content(
+#     model="gemini-2.5-pro", 
+#     contents=prompt,
+#     config=config,
+# )
+# ai_response_gemini25 = response.text
 ```
-
