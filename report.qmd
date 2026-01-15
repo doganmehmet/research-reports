@@ -119,6 +119,8 @@ fed_assets.index = fed_assets.index.to_period('M')  # Convert to monthly period 
 fed_assets.rename(columns= {"WALCL":"fed_assets"}, inplace=True)
 fed_assets = fed_assets.round(4)
 
+
+
 # US MAJOR STOCK INDICES
 # Source: Yahoo Finance
 # Tickers:
@@ -1423,7 +1425,7 @@ import anthropic
 client = anthropic.Anthropic()
 
 message = client.messages.create(
-    model="claude-sonnet-4-5-20250929",
+    model="claude-opus-4-5-20251101",
     max_tokens=8192,
     messages=[
         {
