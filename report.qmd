@@ -1420,24 +1420,70 @@ CHART_FILENAME_LIBRARY = {
 #| output: 'asis'
 #| cache: true
 
-import anthropic
+# import anthropic
 
-client = anthropic.Anthropic()
+# client = anthropic.Anthropic()
 
-message = client.messages.create(
-    model="claude-opus-4-5-20251101",
-    max_tokens=8192,
-    messages=[
-        {
-            "role": "user",
-            "content": prompt
-        }
-    ]
-)
-# ai_response_claude = message.content
-ai_response = message.content[0].text
+# message = client.messages.create(
+#     model="claude-opus-4-5-20251101",
+#     max_tokens=8192,
+#     messages=[
+#         {
+#             "role": "user",
+#             "content": prompt
+#         }
+#     ]
+# )
+# # ai_response_claude = message.content
+# ai_response = message.content[0].text
 ```
 
+
+```{python}
+#| echo: false
+#| output: 'asis'
+#| cache: true
+
+from openai import OpenAI
+
+client = OpenAI()
+
+# Reliable financial/economic domains
+trusted_domains = [
+        "reuters.com",
+        "bloomberg.com",
+        "ft.com",
+        "wsj.com",
+        "federalreserve.gov",
+        "ecb.europa.eu",
+        "bis.org",
+        "imf.org",
+        "worldbank.org",
+        "oecd.org",
+        "sec.gov",
+        "spglobal.com",
+        "msci.com",
+        "morningstar.com",
+        "nasdaq.com",
+        "nyse.com"
+]
+
+response = client.responses.create(
+    model="gpt-5.3",
+        tools=[{
+                        "type": "web_search",
+                        "filters": {
+                            "allowed_domains": trusted_domains
+                        }
+                    }],
+        input=[
+                {"role": "user", "content": prompt}
+        ],
+)
+
+ai_response = response.output_text
+
+```
 
 ```{python}
 #| echo: false
@@ -1472,51 +1518,7 @@ for segment in segments:
 
 
 
-```{python}
-#| echo: false
-#| output: 'asis'
-#| cache: true
 
-# from openai import OpenAI
-
-# client = OpenAI()
-
-# # Reliable financial/economic domains
-# trusted_domains = [
-#     "reuters.com",
-#     "bloomberg.com",
-#     "ft.com",
-#     "wsj.com",
-#     "federalreserve.gov",
-#     "ecb.europa.eu",
-#     "bis.org",
-#     "imf.org",
-#     "worldbank.org",
-#     "oecd.org",
-#     "sec.gov",
-#     "spglobal.com",
-#     "msci.com",
-#     "morningstar.com",
-#     "nasdaq.com",
-#     "nyse.com"
-# ]
-
-# response = client.responses.create(
-#     model="gpt-5",   # or "gbt-5" "gpt-4.1" if GPT-5 isn’t enabled in your account yet
-#     tools=[{
-#             "type": "web_search",
-#             "filters": {
-#               "allowed_domains": trusted_domains
-#             }
-#           }],
-#     input=[
-#         {"role": "user", "content": prompt}
-#     ],
-# )
-
-# ai_response_gbt5 = response.output_text
-
-```
 
 
 
