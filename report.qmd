@@ -1469,7 +1469,7 @@ trusted_domains = [
 ]
 
 response = client.responses.create(
-    model="gpt-5.3",
+    model="gpt-5.2",
         tools=[{
                         "type": "web_search",
                         "filters": {
