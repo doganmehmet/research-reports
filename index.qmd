@@ -2,5 +2,5 @@
 title: "market-research"
 ---
 
-AI-driven research reports.
+AI-driven market research.
 

@@ -5,13 +5,13 @@ on:
     branches:
       - main  # or your default branch
 
-  # 👇 ADD THIS BLOCK TO ENABLE A MANUAL TRIGGER BUTTON
+  # 👇 BELOW BLOCK ENABLES A MANUAL TRIGGER BUTTON
   workflow_dispatch:
 
-  # 👇 ADD THIS BLOCK FOR THE DAILY SCHEDULE
+  # 👇 THIS BLOCK FOR THE WEEKLY SCHEDULE
   schedule:
-    # Runs daily at 23:00 CET/CEST (21:00/22:00 UTC)
-    - cron: '0 21 16 * *'
+    # Runs every Friday at 23:00 CET (22:00 UTC, or 21:00 UTC during CEST)
+    - cron: '0 22 * * 5'
 
 jobs:
   build-deploy:
