@@ -1451,10 +1451,14 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="qwen/qwen3.5",
+    model="qwen/qwen3.5-plus-02-15",
     messages=[
         {"role": "user", "content": prompt}
     ],
+    extra_body={
+        "plugins": [{"id": "web"}],
+        "enable_thinking": True
+    },
 )
 
 ai_response = response.choices[0].message.content
