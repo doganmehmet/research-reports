@@ -228,6 +228,22 @@ for f in files:
     print("Copied to persistent archive:", new_name, "->", archive_dest)
 
     # ========================================================================
+    # STEP 5b: Fix relative paths in archived report for archive/ subdirectory
+    # ========================================================================
+    # Archived reports are served from archive/ but were rendered at root level.
+    # Navbar links like href="./report-latest.html" must become href="../report-latest.html"
+    # so they resolve correctly from the archive/ subdirectory.
+    with open(archive_dest, "r", encoding="utf-8") as fh:
+        html_content = fh.read()
+    html_content = html_content.replace('href="./report-latest.html"', 'href="../report-latest.html"')
+    html_content = html_content.replace('href="./index.html"', 'href="../index.html"')
+    html_content = html_content.replace('href="./about.html"', 'href="../about.html"')
+    html_content = html_content.replace('href="./archive/"', 'href="./"')
+    with open(archive_dest, "w", encoding="utf-8") as fh:
+        fh.write(html_content)
+    print("✅ Fixed relative paths in archived report for archive/ subdirectory")
+
+    # ========================================================================
     # STEP 6: Copy charts directory for archived reports
     # ========================================================================
     # All archived reports share the same charts folder (charts are overwritten each render)
@@ -310,6 +326,17 @@ for f in files:
             if os.path.isfile(src):
                 # Copy individual files (HTML reports)
                 shutil.copy2(src, dst)
+                # Fix relative paths in restored HTML reports (from gh-pages)
+                # so navbar links resolve correctly from the archive/ subdirectory
+                if item.endswith('.html'):
+                    with open(dst, "r", encoding="utf-8") as fh:
+                        content = fh.read()
+                    content = content.replace('href="./report-latest.html"', 'href="../report-latest.html"')
+                    content = content.replace('href="./index.html"', 'href="../index.html"')
+                    content = content.replace('href="./about.html"', 'href="../about.html"')
+                    content = content.replace('href="./archive/"', 'href="./"')
+                    with open(dst, "w", encoding="utf-8") as fh:
+                        fh.write(content)
                 print(f"📄 Copied to docs/archive: {item}")
             elif os.path.isdir(src):
                 # Copy folders (charts/, site_libs/, report_*_files/)
