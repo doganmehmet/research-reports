@@ -6,7 +6,7 @@ project:
 website:
   title: "Market Research"
   # favicon: assets/favicon.ico
-  # site-url: https://yourusername.github.io/yourrepo/
+  site-url: https://doganmehmet.github.io/research-reports/
   navbar:
     left:
       - href: index.qmd
