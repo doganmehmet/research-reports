@@ -40,8 +40,38 @@ jobs:
           python3 -m pip install --upgrade pip
           pip install jupyter pyyaml "pandas>=2.2,<3.0" numpy "pandas_datareader==0.10.0" yfinance matplotlib openai google-genai anthropic
 
+      # 4. Restore archived reports from previous deployments
+      - name: Restore archived reports from gh-pages
+        run: |
+          mkdir -p archived_reports
+          if git fetch origin gh-pages --depth=1 2>/dev/null; then
+            for f in $(git ls-tree --name-only origin/gh-pages -- archive/ 2>/dev/null); do
+              if [[ "$f" == report_*.html ]]; then
+                git show "origin/gh-pages:archive/$f" > "archived_reports/$f" 2>/dev/null && echo "Restored: $f"
+              fi
+            done
+          fi
+          echo "Archived reports restored:"
+          ls archived_reports/*.html 2>/dev/null || echo "  (none)"
 
-      # 4. Render the site
+      # 5. Update archive/index.qmd before render so Quarto renders the correct list
+      - name: Update archive index
+        run: |
+          python3 -c "
+          import os, time
+          archive_dir = 'archived_reports'
+          files = sorted([f for f in os.listdir(archive_dir) if f.endswith('.html')], reverse=True) if os.path.isdir(archive_dir) else []
+          today_report = f'report_{time.strftime(\"%Y-%m-%d\")}.html'
+          if today_report not in files:
+              files.insert(0, today_report)
+          items = '\n'.join(f'- [{f.replace(\".html\", \"\")}]({f})' for f in files) if files else 'No archived reports yet.'
+          content = f'---\ntitle: Archive\n---\n\n# Past Reports\n\n{items}\n'
+          with open('archive/index.qmd', 'w') as fh:
+              fh.write(content)
+          print(f'Updated archive/index.qmd with {len(files)} reports')
+          "
+
+      # 6. Render the site
       - name: Render Quarto site
         run: quarto render
         env:
