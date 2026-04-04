@@ -1389,6 +1389,53 @@ plt.savefig(
 #| echo: false
 #| include: false
 
+from matplotlib.backends.backend_pdf import PdfPages
+from PIL import Image
+from datetime import date as _date
+
+chart_titles = [
+    "MSCI World Equity Index",
+    "Performance of Major US Stock Indices",
+    "US Inflation Rate (YoY)",
+    "US Inflation Rate CPI and PCE (YoY)",
+    "US Unemployment Rate",
+    "US GDP Growth Rate (YoY)",
+    "Federal Reserve Total Assets",
+    "Household Debt Service Payments",
+    "S&P 500 PE Ratio",
+    "Cboe Volatility Index (VIX)",
+    "US Past Recessions",
+    "Federal Funds Target Rate (Upper Limit)",
+    "US 2Y and 10Y Treasury Yields and Spread",
+    "ICE BofA Option-Adjusted Spreads",
+    "Gold Prices",
+    "Brent Oil Prices",
+]
+
+pdf_path = f"docs/market_charts_{_date.today().strftime('%Y-%m-%d')}.pdf"
+with PdfPages(pdf_path) as pdf:
+    for title in chart_titles:
+        img_path = f"charts/{title}.png"
+        try:
+            img = Image.open(img_path)
+            w, h = img.size
+            fig, ax = plt.subplots(figsize=(w / 100, h / 100))
+            ax.imshow(img)
+            ax.set_title(title, fontsize=14, fontweight='bold', pad=12)
+            ax.axis('off')
+            fig.tight_layout()
+            pdf.savefig(fig, dpi=150)
+            plt.close(fig)
+        except FileNotFoundError:
+            print(f"Warning: {img_path} not found, skipping.")
+
+print(f"Charts PDF saved to {pdf_path}")
+```
+
+```{python}
+#| echo: false
+#| include: false
+
 # The base path to your charts folder
 base_path = "charts/"
 
@@ -1414,7 +1461,7 @@ CHART_FILENAME_LIBRARY = {
 
 ```
 
-
+  
 
 
 ```{python}
