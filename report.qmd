@@ -1478,7 +1478,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="qwen/qwen3.5-plus-02-15",  #"xiaomi/mimo-v2-pro"
+    model="qwen/qwen3.6-plus:free",  #"xiaomi/mimo-v2-pro"
     messages=[
         {"role": "user", "content": prompt}
     ],
