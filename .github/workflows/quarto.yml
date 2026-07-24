@@ -45,10 +45,18 @@ jobs:
         run: |
           mkdir -p archived_reports
           if git fetch origin gh-pages --depth=1 2>/dev/null; then
-            for f in $(git ls-tree --name-only origin/gh-pages:archive/ 2>/dev/null); do
-              if [[ "$f" == report_*.html ]]; then
-                git show "origin/gh-pages:archive/$f" > "archived_reports/$f" 2>/dev/null && echo "Restored: $f"
-              fi
+            # Restore archived report HTML files AND their dated chart
+            # snapshots (charts_YYYY-MM-DD/) so each archived report keeps
+            # showing the charts from its own render. IFS-safe loop: chart
+            # filenames contain spaces.
+            git ls-tree -r --name-only origin/gh-pages -- archive/ 2>/dev/null | while IFS= read -r f; do
+              rel="${f#archive/}"
+              case "$rel" in
+                report_*.html|charts_*/*)
+                  mkdir -p "archived_reports/$(dirname "$rel")"
+                  git show "origin/gh-pages:$f" > "archived_reports/$rel" 2>/dev/null && echo "Restored: $rel"
+                  ;;
+              esac
             done
           fi
           echo "Archived reports restored:"

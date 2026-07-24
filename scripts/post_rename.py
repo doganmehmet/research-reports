@@ -259,6 +259,10 @@ for f in files:
     html_content = html_content.replace('href="./index.html"', 'href="../index.html"')
     html_content = html_content.replace('href="./about.html"', 'href="../about.html"')
     html_content = html_content.replace('href="./archive/"', 'href="./"')
+    # Point this report at its own dated chart snapshot (charts_YYYY-MM-DD/)
+    # instead of the shared charts/ folder, so it keeps showing the charts
+    # from ITS render even after later renders overwrite the shared folder.
+    html_content = html_content.replace('src="charts/', f'src="charts_{suffix}/')
     with open(archive_dest, "w", encoding="utf-8") as fh:
         fh.write(html_content)
     print("✅ Fixed relative paths in archived report for archive/ subdirectory")
@@ -266,8 +270,8 @@ for f in files:
     # ========================================================================
     # STEP 6: Copy charts directory for archived reports
     # ========================================================================
-    # All archived reports share the same charts folder (charts are overwritten each render)
-    # This ensures archived reports can display their charts correctly
+    # Shared charts folder kept for backward compatibility: archived reports
+    # created before dated snapshots existed still reference charts/.
     charts_dir = "docs/charts"
     if os.path.isdir(charts_dir):
         report_charts_dir = os.path.join(persistent_archive, "charts")
@@ -275,6 +279,21 @@ for f in files:
             shutil.rmtree(report_charts_dir)  # Remove old charts
         shutil.copytree(charts_dir, report_charts_dir)  # Copy new charts
         print("✅ Copied charts for archive:", charts_dir, "->", report_charts_dir)
+
+    # ========================================================================
+    # STEP 6b: Snapshot charts into a dated folder for THIS report
+    # ========================================================================
+    # Each render gets its own immutable charts_YYYY-MM-DD/ folder so archived
+    # reports keep displaying the charts that match their text. Multiple runs
+    # on the same day share one snapshot (matching the report filename, which
+    # is also per-day). These folders are restored from gh-pages by the
+    # workflow on every CI run, so they persist across renders.
+    if os.path.isdir(charts_dir):
+        dated_charts_dir = os.path.join(persistent_archive, f"charts_{suffix}")
+        if os.path.exists(dated_charts_dir):
+            shutil.rmtree(dated_charts_dir)
+        shutil.copytree(charts_dir, dated_charts_dir)
+        print("✅ Snapshotted charts for this report:", charts_dir, "->", dated_charts_dir)
 
     # ========================================================================
     # STEP 7: Copy site_libs for consistent styling
@@ -339,30 +358,49 @@ for f in files:
     os.makedirs(docs_archive, exist_ok=True)
 
     if os.path.exists(persistent_archive):
-        for item in os.listdir(persistent_archive):
+        items = os.listdir(persistent_archive)
+
+        # Pass 1: copy folders (charts/, charts_YYYY-MM-DD/, site_libs/,
+        # report_*_files/) so dated chart snapshots are in place before the
+        # HTML rewrite in pass 2 checks for them.
+        for item in items:
             src = os.path.join(persistent_archive, item)
             dst = os.path.join(docs_archive, item)
-
-            if os.path.isfile(src):
-                # Copy individual files (HTML reports)
-                shutil.copy2(src, dst)
-                # Fix relative paths in restored HTML reports (from gh-pages)
-                # so navbar links resolve correctly from the archive/ subdirectory
-                if item.endswith('.html'):
-                    with open(dst, "r", encoding="utf-8") as fh:
-                        content = fh.read()
-                    content = content.replace('href="./report-latest.html"', 'href="../report-latest.html"')
-                    content = content.replace('href="./index.html"', 'href="../index.html"')
-                    content = content.replace('href="./about.html"', 'href="../about.html"')
-                    content = content.replace('href="./archive/"', 'href="./"')
-                    with open(dst, "w", encoding="utf-8") as fh:
-                        fh.write(content)
-                print(f"📄 Copied to docs/archive: {item}")
-            elif os.path.isdir(src):
-                # Copy folders (charts/, site_libs/, report_*_files/)
+            if os.path.isdir(src):
                 if os.path.exists(dst):
                     shutil.rmtree(dst)  # Remove old version
                 shutil.copytree(src, dst)
                 print(f"📁 Copied folder to docs/archive: {item}")
+
+        # Pass 2: copy files (HTML reports)
+        for item in items:
+            src = os.path.join(persistent_archive, item)
+            dst = os.path.join(docs_archive, item)
+            if not os.path.isfile(src):
+                continue
+            shutil.copy2(src, dst)
+            # Fix relative paths in restored HTML reports (from gh-pages)
+            # so navbar links resolve correctly from the archive/ subdirectory
+            if item.endswith('.html'):
+                with open(dst, "r", encoding="utf-8") as fh:
+                    content = fh.read()
+                content = content.replace('href="./report-latest.html"', 'href="../report-latest.html"')
+                content = content.replace('href="./index.html"', 'href="../index.html"')
+                content = content.replace('href="./about.html"', 'href="../about.html"')
+                content = content.replace('href="./archive/"', 'href="./"')
+                # Repoint report_<date>.html at its dated chart snapshot when
+                # one exists (either restored from gh-pages or committed as a
+                # backfill in docs/archive/). Reports without a snapshot keep
+                # using the shared charts/ folder. No-op for reports already
+                # rewritten in STEP 5b (their srcs no longer match charts/).
+                m = re.match(r'report_(\d{4}-\d{2}-\d{2})\.html$', item)
+                if m:
+                    report_date = m.group(1)
+                    snapshot_dir = os.path.join(docs_archive, f"charts_{report_date}")
+                    if os.path.isdir(snapshot_dir):
+                        content = content.replace('src="charts/', f'src="charts_{report_date}/')
+                with open(dst, "w", encoding="utf-8") as fh:
+                    fh.write(content)
+            print(f"📄 Copied to docs/archive: {item}")
 
     print("✅ All archived content ready for deployment")
