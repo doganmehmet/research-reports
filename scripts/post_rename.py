@@ -30,6 +30,7 @@ Author: Market Research Automation System
 """
 
 import os
+import re
 import time
 import shutil
 import subprocess
@@ -206,6 +207,25 @@ for f in files:
         shutil.move(res_dir, new_res)
         new_res_dir = new_res
         print("Renamed resources:", res_dir, "->", new_res)
+
+    # ========================================================================
+    # STEP 3b: Cache-bust chart image URLs
+    # ========================================================================
+    # Chart filenames never change between renders (charts/Foo.png), so browsers
+    # keep serving stale cached PNGs even after a new render updates the data.
+    # Appending ?v=<render-date> makes the URL unique per render, forcing
+    # browsers to fetch the fresh image. Runs BEFORE the stable/archive copies
+    # below so report-latest.html and archived reports inherit the fix.
+    with open(new_name, "r", encoding="utf-8") as fh:
+        html_content = fh.read()
+    html_content, n_busted = re.subn(
+        r'(src="charts/[^"?]+?\.png)"',
+        rf'\1?v={suffix}"',
+        html_content,
+    )
+    with open(new_name, "w", encoding="utf-8") as fh:
+        fh.write(html_content)
+    print(f"✅ Cache-busted {n_busted} chart URLs with ?v={suffix}")
 
     # ========================================================================
     # STEP 4: Create stable "latest" copy for consistent URLs
