@@ -59,6 +59,17 @@ jobs:
               esac
             done
           fi
+          # Bootstrap: pick up chart snapshots committed in docs/archive
+          # (e.g. the backfilled April 2026 folders). Runs BEFORE quarto
+          # render, which may clean docs/. gh-pages versions take precedence.
+          for d in docs/archive/charts_*/; do
+            [ -d "$d" ] || continue
+            name="$(basename "$d")"
+            if [ ! -d "archived_reports/$name" ]; then
+              cp -R "$d" "archived_reports/$name"
+              echo "Bootstrapped from docs/archive: $name"
+            fi
+          done
           echo "Archived reports restored:"
           ls archived_reports/*.html 2>/dev/null || echo "  (none)"
 
