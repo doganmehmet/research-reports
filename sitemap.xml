@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://doganmehmet.github.io/research-reports/index.html</loc>
-    <lastmod>2026-08-07T22:29:57.507Z</lastmod>
-  </url>
-  <url>
-    <loc>https://doganmehmet.github.io/research-reports/archive/index.html</loc>
-    <lastmod>2026-08-07T22:30:51.882Z</lastmod>
+    <loc>https://doganmehmet.github.io/research-reports/report.html</loc>
+    <lastmod>2026-08-14T22:17:29.758Z</lastmod>
   </url>
   <url>
     <loc>https://doganmehmet.github.io/research-reports/about.html</loc>
-    <lastmod>2026-08-07T22:29:57.461Z</lastmod>
+    <lastmod>2026-08-14T22:17:29.721Z</lastmod>
   </url>
   <url>
-    <loc>https://doganmehmet.github.io/research-reports/report.html</loc>
-    <lastmod>2026-08-07T22:29:57.507Z</lastmod>
+    <loc>https://doganmehmet.github.io/research-reports/archive/index.html</loc>
+    <lastmod>2026-08-14T22:18:22.966Z</lastmod>
+  </url>
+  <url>
+    <loc>https://doganmehmet.github.io/research-reports/index.html</loc>
+    <lastmod>2026-08-14T22:17:29.758Z</lastmod>
   </url>
 </urlset>
